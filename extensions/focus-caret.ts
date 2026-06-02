@@ -1,0 +1,111 @@
+/**
+ * Focus-aware Caret Extension
+ *
+ * Sets the cursor to green and keeps it visible when focused.
+ * The TUI draws its own fake cursor overlay - we just keep the hardware cursor green.
+ * Hides the fake caret when typing slash commands (starting with /).
+ *
+ * Usage: pi --extension ~/.pi/agent/extensions/focus-caret.ts
+ */
+
+import { CustomEditor, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { TUI, EditorTheme } from "@earendil-works/pi-tui";
+import type { KeybindingsManager } from "@earendil-works/pi-coding-agent";
+
+// Hardware cursor sequences
+const SHOW_CURSOR = "\x1b[?25h";
+const HIDE_CURSOR = "\x1b[?25l";
+// OSC 12 sets cursor color (green = #00FF00)
+const CURSOR_GREEN = "\x1b]12;rgb:00/ff/00\x07";
+
+let hasFocus = true;
+let unsubscribe: (() => void) | undefined;
+let interval: ReturnType<typeof setInterval> | undefined;
+let shouldHideCaret = false;
+
+function showCursor() {
+	if (shouldHideCaret) return;
+	process.stdout.write(CURSOR_GREEN);
+	process.stdout.write(SHOW_CURSOR);
+}
+
+function hideCursorForCommand() {
+	process.stdout.write(HIDE_CURSOR);
+}
+
+function updateCursor() {
+	if (shouldHideCaret || !hasFocus) {
+		hideCursorForCommand();
+	} else {
+		showCursor();
+	}
+}
+
+export default function (pi: ExtensionAPI) {
+	pi.on("session_start", (_event, ctx) => {
+		showCursor();
+		
+		// Keep sending cursor state every 20ms
+		interval = setInterval(() => {
+			updateCursor();
+		}, 20);
+
+		// Listen for focus events
+		unsubscribe = ctx.ui.onTerminalInput((data: string) => {
+			if (data === "\x1b[O") {
+				hasFocus = false;
+				process.stdout.write(HIDE_CURSOR);
+			} else if (data === "\x1b[I") {
+				hasFocus = true;
+				showCursor();
+			}
+		});
+
+		ctx.ui.setEditorComponent((tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager) => {
+			return new FocusAwareEditor(tui, theme, keybindings);
+		});
+	});
+
+	pi.on("session_shutdown", () => {
+		if (interval) clearInterval(interval);
+		unsubscribe?.();
+		process.stdout.write(SHOW_CURSOR);
+	});
+}
+
+class FocusAwareEditor extends CustomEditor {
+	override handleInput(data: string): void {
+		if (data === "\x1b[O") {
+			hasFocus = false;
+			this.focused = false;
+			updateCursor();
+			return;
+		} else if (data === "\x1b[I") {
+			hasFocus = true;
+			this.focused = true;
+			updateCursor();
+			return;
+		}
+
+		super.handleInput(data);
+		
+		// Check if we're in a slash command context
+		const textAfter = this.getText();
+		const cursorAfter = this.getCursor();
+		const textBeforeCursor = cursorAfter.line === 0 && cursorAfter.col > 0
+			? textAfter.substring(0, cursorAfter.col)
+			: textAfter;
+		
+		const isTypingCommand = textBeforeCursor.trimStart().startsWith("/");
+		
+		if (isTypingCommand) {
+			this.focused = false;
+			shouldHideCaret = true;
+			updateCursor();
+		} else if (shouldHideCaret) {
+			this.focused = true;
+			shouldHideCaret = false;
+			updateCursor();
+		}
+	}
+}

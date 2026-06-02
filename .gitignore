@@ -1,0 +1,39 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Node (for extensions with dependencies)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Local / secrets
+.env
+.env.*
+*.local
+auth.json
+
+# Build / cache
+dist/
+build/
+*.tsbuildinfo
+.cache/
+
+# Pi runtime data
+sessions/
+bin/
+*.log
+
+# Temp / partial files (e.g. broken clone artifacts)
+.proot.*.tmp_*
+*.tmp
