@@ -1,5 +1,9 @@
 {
-  "lastChangelogVersion": "0.78.1",
-  "defaultModel": "MiniMax-M3",
-  "defaultProvider": "minimax"
+  "lastChangelogVersion": "0.79.3",
+  "defaultModel": "mimo-v2.5-pro",
+  "defaultProvider": "xiaomi-token-plan-ams",
+  "packages": [
+    "../../pi-hashline-edit-pro"
+  ],
+  "defaultThinkingLevel": "high"
 }
