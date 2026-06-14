@@ -1,1 +1,1 @@
-Analyze the codebase of the laravel project in this folder to be able to understand it's architecture, code patterns and standards, so that you are better able to handle the upcoming tasks
+Analyze the codebase of the project in this folder to be able to understand it's architecture, code patterns and standards, so that you are better able to handle the upcoming tasks
