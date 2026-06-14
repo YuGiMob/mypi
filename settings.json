@@ -5,5 +5,10 @@
   "packages": [
     "../../pi-hashline-edit-pro"
   ],
-  "defaultThinkingLevel": "high"
+  "defaultThinkingLevel": "high",
+  "defaultProjectTrust": "always",
+  "enableInstallTelemetry": false,
+  "compaction": {
+    "enabled": true
+  }
 }
