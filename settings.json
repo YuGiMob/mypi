@@ -1,14 +1,15 @@
 {
-  "lastChangelogVersion": "0.79.3",
+  "lastChangelogVersion": "0.79.6",
   "defaultModel": "mimo-v2.5-pro",
   "defaultProvider": "xiaomi-token-plan-ams",
   "packages": [
-    "../../pi-hashline-edit-pro"
+    "npm:pi-hashline-edit-pro"
   ],
   "defaultThinkingLevel": "high",
   "defaultProjectTrust": "always",
   "enableInstallTelemetry": false,
   "compaction": {
     "enabled": true
-  }
+  },
+  "theme": "dark"
 }
