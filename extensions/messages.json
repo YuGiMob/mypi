@@ -1,0 +1,5 @@
+{
+  "1": "Analyze the codebase of the project in this folder to be able to understand it's architecture, code patterns and standards, so that you are better able to handle the upcoming tasks",
+  "2": "I want you to inform me about all of the improvements you can think of for this project",
+  "3": "Are these improvements actually adding value to the application? Are these really worth implementing?"
+}
