@@ -1,12 +1,12 @@
 {
   "lastChangelogVersion": "0.79.9",
-  "defaultModel": "kimi-k2.7-code",
-  "defaultProvider": "ollama-cloud",
+  "defaultModel": "mimo-v2.5-pro",
+  "defaultProvider": "xiaomi-token-plan-ams",
   "packages": [
     "npm:pi-hashline-edit-pro",
     "npm:pi-tor-proxy"
   ],
-  "defaultThinkingLevel": "medium",
+  "defaultThinkingLevel": "high",
   "defaultProjectTrust": "always",
   "enableInstallTelemetry": false,
   "compaction": {

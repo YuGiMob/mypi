@@ -41,10 +41,10 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "qwen3.5:397b":      { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
 
   // DeepSeek
-  "deepseek-v3.1:671b": { contextWindow: 64_000, maxTokens: 8192,  reasoning: false, vision: false },
-  "deepseek-v3.2":      { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: false },
-  "deepseek-v4-pro":    { contextWindow: 128_000, maxTokens: 16384, reasoning: true,  vision: false },
-  "deepseek-v4-flash":  { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: false },
+  "deepseek-v3.1:671b": { contextWindow: 163_840, maxTokens: 32_768, reasoning: false, vision: false },
+  "deepseek-v3.2":      { contextWindow: 163_840, maxTokens: 32_768, reasoning: true,  vision: false },
+  "deepseek-v4-pro":    { contextWindow: 1_048_576, maxTokens: 65_536, reasoning: true,  vision: false },
+  "deepseek-v4-flash":  { contextWindow: 1_048_576, maxTokens: 65_536, reasoning: true,  vision: false },
 
   // Mistral / Ministral
   "ministral-3:3b":         { contextWindow: 32_000, maxTokens: 4096,  reasoning: false, vision: false },
