@@ -10,6 +10,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { AutocompleteItem } from "@earendil-works/pi-tui";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -46,6 +47,15 @@ export default function (pi: ExtensionAPI) {
 	// /msg <number> - send a predefined message
 	pi.registerCommand("msg", {
 		description: "Send a predefined message by number",
+		getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
+			const messages = getMessages();
+			const items = Object.keys(messages).map((num) => ({
+				value: num,
+				label: `Message ${num}: ${messages[num].substring(0, 50)}${messages[num].length > 50 ? '...' : ''}`,
+			}));
+			const filtered = items.filter((i) => i.value.startsWith(prefix));
+			return filtered.length > 0 ? filtered : null;
+		},
 		handler: async (args, ctx) => {
 			if (!ctx.hasUI) {
 				ctx.ui.notify("/msg requires interactive mode", "error");
@@ -73,6 +83,15 @@ export default function (pi: ExtensionAPI) {
 	// /change-msg <number> <content> - change or create a message
 	pi.registerCommand("change-msg", {
 		description: "Change or create a predefined message",
+		getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
+			const messages = getMessages();
+			const items = Object.keys(messages).map((num) => ({
+				value: num,
+				label: `Message ${num}: ${messages[num].substring(0, 50)}${messages[num].length > 50 ? '...' : ''}`,
+			}));
+			const filtered = items.filter((i) => i.value.startsWith(prefix));
+			return filtered.length > 0 ? filtered : null;
+		},
 		handler: async (args, ctx) => {
 			if (!ctx.hasUI) {
 				ctx.ui.notify("/change-msg requires interactive mode", "error");
@@ -110,6 +129,15 @@ export default function (pi: ExtensionAPI) {
 	// /show-msg <number> - display a message
 	pi.registerCommand("show-msg", {
 		description: "Display the contents of a predefined message",
+		getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
+			const messages = getMessages();
+			const items = Object.keys(messages).map((num) => ({
+				value: num,
+				label: `Message ${num}: ${messages[num].substring(0, 50)}${messages[num].length > 50 ? '...' : ''}`,
+			}));
+			const filtered = items.filter((i) => i.value.startsWith(prefix));
+			return filtered.length > 0 ? filtered : null;
+		},
 		handler: async (args, ctx) => {
 			if (!ctx.hasUI) {
 				ctx.ui.notify("/show-msg requires interactive mode", "error");
