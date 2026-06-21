@@ -1,12 +1,12 @@
 {
   "lastChangelogVersion": "0.79.9",
-  "defaultModel": "glm-5.2",
+  "defaultModel": "kimi-k2.7-code",
   "defaultProvider": "ollama-cloud",
   "packages": [
     "npm:pi-hashline-edit-pro",
     "npm:pi-tor-proxy"
   ],
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "medium",
   "defaultProjectTrust": "always",
   "enableInstallTelemetry": false,
   "compaction": {

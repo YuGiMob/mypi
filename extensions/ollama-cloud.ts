@@ -64,9 +64,9 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "glm-5.2":    { contextWindow: 976_000, maxTokens: 131_072, reasoning: true,  vision: false },
 
   // Kimi
-  "kimi-k2.5":       { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "kimi-k2.6":       { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "kimi-k2.7-code":  { contextWindow: 128_000, maxTokens: 16384, reasoning: true,  vision: false },
+  "kimi-k2.5":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: false },
+  "kimi-k2.6":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: false },
+  "kimi-k2.7-code":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
 
   // GPT-OSS
   "gpt-oss:20b":    { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: false },
