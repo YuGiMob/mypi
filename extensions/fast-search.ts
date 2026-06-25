@@ -63,7 +63,7 @@ export default function (pi: ExtensionAPI) {
       ),
     }),
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-      const args: string[] = ["--no-heading", "--color", "never"];
+      const args: string[] = ["--color", "never"];
 
       if (params.ignoreCase) args.push("-i");
       if (params.fixedStrings) args.push("-F");
@@ -105,7 +105,7 @@ export default function (pi: ExtensionAPI) {
           content: [
             {
               type: "text",
-              text: `$ ${displayCmd}\n${result || "(no matches found)"}`,
+              text: `${result || "(no matches found)"}`,
             },
           ],
           details: { command: displayCmd, matchCount: lines.length },
@@ -213,7 +213,7 @@ export default function (pi: ExtensionAPI) {
           content: [
             {
               type: "text",
-              text: `$ ${displayCmd}\n${result || "(no files found)"}`,
+              text: `${result || "(no files found)"}`,
             },
           ],
           details: { command: displayCmd, matchCount: lines.length },
