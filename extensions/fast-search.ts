@@ -63,7 +63,7 @@ export default function (pi: ExtensionAPI) {
       ),
     }),
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-      const args: string[] = ["--color", "never"];
+      const args: string[] = ["-n", "--heading", "--color", "never"];
 
       if (params.ignoreCase) args.push("-i");
       if (params.fixedStrings) args.push("-F");
@@ -115,7 +115,7 @@ export default function (pi: ExtensionAPI) {
         // rg exits with code 1 when no matches found — that's not an error
         if (error.status === 1) {
           return {
-            content: [{ type: "text", text: `$ ${displayCmd}\n(no matches found)` }],
+            content: [{ type: "text", text: `(no matches found)` }],
             details: { command: displayCmd, matchCount: 0 },
           };
         }
@@ -123,7 +123,7 @@ export default function (pi: ExtensionAPI) {
           content: [
             {
               type: "text",
-              text: `$ ${displayCmd}\nrg error: ${error.stderr?.trim() || error.message || "unknown error"}`,
+              text: `rg error: ${error.stderr?.trim() || error.message || "unknown error"}`,
             },
           ],
           details: { command: displayCmd },
@@ -222,7 +222,7 @@ export default function (pi: ExtensionAPI) {
         const error = err as { stderr?: string; message?: string; status?: number };
         if (error.status === 1) {
           return {
-            content: [{ type: "text", text: `$ ${displayCmd}\n(no files found)` }],
+            content: [{ type: "text", text: `(no files found)` }],
             details: { command: displayCmd, matchCount: 0 },
           };
         }
@@ -230,7 +230,7 @@ export default function (pi: ExtensionAPI) {
           content: [
             {
               type: "text",
-              text: `$ ${displayCmd}\nfd error: ${error.stderr?.trim() || error.message || "unknown error"}`,
+              text: `fd error: ${error.stderr?.trim() || error.message || "unknown error"}`,
             },
           ],
           details: { command: displayCmd },
