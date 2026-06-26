@@ -33,7 +33,7 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "gemma3:4b":         { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
   "gemma3:12b":        { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
   "gemma3:27b":        { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
-  "gemma4:31b":        { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
+  "gemma4:31b":        { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,   vision: true  },
 
   // Qwen
   "qwen3-coder:480b":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
@@ -41,15 +41,15 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "qwen3.5:397b":      { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
 
   // DeepSeek
-  "deepseek-v3.1:671b": { contextWindow: 163_840, maxTokens: 32_768, reasoning: false, vision: false },
-  "deepseek-v3.2":      { contextWindow: 163_840, maxTokens: 32_768, reasoning: true,  vision: false },
+  "deepseek-v3.1:671b": { contextWindow: 163_840, maxTokens: 32_768, reasoning: true,  vision: false },
+  "deepseek-v3.2":      { contextWindow: 160_000, maxTokens: 32_768, reasoning: true,  vision: false },
   "deepseek-v4-pro":    { contextWindow: 1_048_576, maxTokens: 65_536, reasoning: true,  vision: false },
   "deepseek-v4-flash":  { contextWindow: 1_048_576, maxTokens: 65_536, reasoning: true,  vision: false },
 
   // Mistral / Ministral
-  "ministral-3:3b":         { contextWindow: 32_000, maxTokens: 4096,  reasoning: false, vision: false },
-  "ministral-3:8b":         { contextWindow: 32_000, maxTokens: 4096,  reasoning: false, vision: false },
-  "ministral-3:14b":        { contextWindow: 32_000, maxTokens: 4096,  reasoning: false, vision: false },
+  "ministral-3:3b":         { contextWindow: 256_000, maxTokens: 4096,  reasoning: false, vision: false },
+  "ministral-3:8b":         { contextWindow: 256_000, maxTokens: 4096,  reasoning: false, vision: false },
+  "ministral-3:14b":        { contextWindow: 256_000, maxTokens: 4096,  reasoning: false, vision: false },
   "mistral-large-3:675b":   { contextWindow: 128_000, maxTokens: 16384, reasoning: true,  vision: false },
 
   // Devstral (coding)
@@ -58,30 +58,30 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
 
   // GLM
   // GLM
-  "glm-4.7":    { contextWindow: 128_000, maxTokens: 8192,   reasoning: false, vision: false },
-  "glm-5":      { contextWindow: 128_000, maxTokens: 8192,   reasoning: true,  vision: false },
+  "glm-4.7":    { contextWindow: 198_000, maxTokens: 8192,   reasoning: false, vision: false },
+  "glm-5":      { contextWindow: 198_000, maxTokens: 131_072, reasoning: true,  vision: false },
   "glm-5.1":    { contextWindow: 198_000, maxTokens: 131_072, reasoning: true,  vision: false },
   "glm-5.2":    { contextWindow: 976_000, maxTokens: 131_072, reasoning: true,  vision: false },
 
   // Kimi
-  "kimi-k2.5":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "kimi-k2.6":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "kimi-k2.7-code":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
+  "kimi-k2.5":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: true  },
+  "kimi-k2.6":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: true  },
+  "kimi-k2.7-code":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: true  },
 
   // GPT-OSS
-  "gpt-oss:20b":    { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: false },
+  "gpt-oss:20b":    { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
   "gpt-oss:120b":   { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
 
   // MiniMax
-  "minimax-m2.1":    { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: false },
-  "minimax-m2.5":    { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: false },
-  "minimax-m2.7":    { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "minimax-m3":      { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
+  "minimax-m2.1":    { contextWindow: 200_000, maxTokens: 8192,  reasoning: false, vision: false },
+  "minimax-m2.5":    { contextWindow: 198_000, maxTokens: 8192,  reasoning: false, vision: false },
+  "minimax-m2.7":    { contextWindow: 200_000, maxTokens: 8192,  reasoning: true,  vision: false },
+  "minimax-m3":      { contextWindow: 512_000, maxTokens: 16384, reasoning: true,  vision: true  },
 
   // Nemotron
-  "nemotron-3-nano:30b": { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: false },
-  "nemotron-3-super":    { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "nemotron-3-ultra":    { contextWindow: 128_000, maxTokens: 16384, reasoning: true,  vision: false },
+  "nemotron-3-nano:30b": { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
+  "nemotron-3-super":    { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: false },
+  "nemotron-3-ultra":    { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
 
   // Gemini
   "gemini-3-flash-preview": { contextWindow: 1_000_000, maxTokens: 8192, reasoning: false, vision: true },

@@ -31,6 +31,11 @@ export default function (pi: ExtensionAPI) {
     label: "Ripgrep",
     description:
       "Search file contents using ripgrep (rg). Fast alternative to grep. Supports regex patterns, glob filtering, and context lines.",
+    promptSnippet: "Search file contents using rg (ripgrep) — prefer this over bash+grep",
+    promptGuidelines: [
+      "Always use the `rg` tool instead of bash+grep — it's orders of magnitude faster",
+      "Use rg for all file content searches; do NOT fall back to grep in bash",
+    ],
     parameters: Type.Object({
       pattern: Type.String({ description: "Search pattern (regex supported)" }),
       path: Type.Optional(
@@ -139,6 +144,11 @@ export default function (pi: ExtensionAPI) {
     label: "Fd-find",
     description:
       "Find files and directories using fd (fd-find). Fast alternative to find. Supports glob patterns, file type filtering, and extension filtering.",
+    promptSnippet: "Find files using fd (fd-find) — prefer this over bash+find",
+    promptGuidelines: [
+      "Always use the `fd` tool instead of bash+find — it's much faster",
+      "Use fd for all file/directory searches; do NOT fall back to find in bash",
+    ],
     parameters: Type.Object({
       pattern: Type.Optional(
         Type.String({ description: "File name pattern to search for (optional if extension is provided)" }),
