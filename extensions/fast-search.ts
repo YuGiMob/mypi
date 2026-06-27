@@ -3,7 +3,6 @@ import { Type } from "typebox";
 import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 
-// Resolve rg and fd binary paths (handle non-standard PATH in execSync)
 function resolveBinary(name: string): string {
   const commonPaths = [
     "/usr/local/bin",
@@ -13,19 +12,17 @@ function resolveBinary(name: string): string {
     `${process.env.HOME}/.local/bin`,
     `${process.env.HOME}/.cargo/bin`,
   ];
-  // Check PATH first
   const pathEnv = process.env.PATH || "";
   for (const dir of [...pathEnv.split(":"), ...commonPaths]) {
     const full = `${dir}/${name}`;
     if (existsSync(full)) return full;
   }
-  return name; // fallback, let it fail with a clear error
+  return name;
 }
 
 const RG_BIN = resolveBinary("rg");
 const FD_BIN = resolveBinary("fd");
 export default function (pi: ExtensionAPI) {
-  // ── Register `rg` (ripgrep) as a first-class tool ──────────────
   pi.registerTool({
     name: "rg",
     label: "Ripgrep",
@@ -94,7 +91,7 @@ export default function (pi: ExtensionAPI) {
         const stdout = execSync(escapedCmd, {
           cwd: ctx.cwd,
           encoding: "utf-8",
-          maxBuffer: 10 * 1024 * 1024, // 10MB
+          maxBuffer: 10 * 1024 * 1024,
           timeout: 30_000,
           stdio: ["ignore", "pipe", "pipe"],
         });
@@ -117,7 +114,6 @@ export default function (pi: ExtensionAPI) {
         };
       } catch (err: unknown) {
         const error = err as { stderr?: string; message?: string; status?: number };
-        // rg exits with code 1 when no matches found — that's not an error
         if (error.status === 1) {
           return {
             content: [{ type: "text", text: `(no matches found)` }],
@@ -138,7 +134,6 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  // ── Register `fd` (fd-find) as a first-class tool ──────────────
   pi.registerTool({
     name: "fd",
     label: "Fd-find",
@@ -207,7 +202,7 @@ export default function (pi: ExtensionAPI) {
         const stdout = execSync(escapedCmd, {
           cwd: ctx.cwd,
           encoding: "utf-8",
-          maxBuffer: 10 * 1024 * 1024, // 10MB
+          maxBuffer: 10 * 1024 * 1024,
           timeout: 30_000,
           stdio: ["ignore", "pipe", "pipe"],
         });
@@ -250,7 +245,6 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  // ── Block the slow built-in tools and bash commands ──────────
   pi.on("tool_call", async (event) => {
     if (event.toolName === "grep") {
       return {
@@ -268,10 +262,8 @@ export default function (pi: ExtensionAPI) {
       };
     }
 
-    // Also block bash commands that use grep or find directly
     if (event.toolName === "bash") {
       const cmd = (event.input as { command?: string }).command || "";
-      // Check if the command starts with or pipes to grep/find
       const grepFindPattern = /(?:^|[|;&])\s*(grep|find)\b/;
       if (grepFindPattern.test(cmd)) {
         return {
@@ -284,7 +276,6 @@ export default function (pi: ExtensionAPI) {
   });
 }
 
-/** Shell-escape a single argument for execSync */
 function escapeArg(arg: string): string {
   return `'${arg.replace(/'/g, "'\\''")}'`;
 }

@@ -1,7 +1,7 @@
 {
   "lastChangelogVersion": "0.80.2",
-  "defaultModel": "deepseek-v4-flash",
-  "defaultProvider": "ollama-cloud",
+  "defaultModel": "glm-5.2-anthropic",
+  "defaultProvider": "vsllm-anthropic",
   "packages": [
     "npm:pi-hashline-edit-pro"
   ],
