@@ -1,7 +1,17 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { execSync } from "node:child_process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { existsSync } from "node:fs";
+
+const execFileAsync = promisify(execFile);
+
+const RG_BIN = resolveBinary("rg");
+const FD_BIN = resolveBinary("fd");
+
+const MAX_LINES = 500;
+const MAX_BUFFER = 10 * 1024 * 1024;
+const TIMEOUT_MS = 30_000;
 
 function resolveBinary(name: string): string {
   const commonPaths = [
@@ -20,8 +30,66 @@ function resolveBinary(name: string): string {
   return name;
 }
 
-const RG_BIN = resolveBinary("rg");
-const FD_BIN = resolveBinary("fd");
+interface SearchOutcome {
+  text: string;
+  matchCount: number;
+}
+
+/**
+ * Run a search binary (rg/fd) and return truncated stdout (≤ MAX_LINES lines).
+ * Exit code 1 means "no matches", which is reported as an empty result, not an error.
+ */
+async function runSearch(bin: string, args: string[], cwd: string, emptyMsg: string): Promise<SearchOutcome> {
+  try {
+    const { stdout } = await execFileAsync(bin, args, {
+      cwd,
+      encoding: "utf-8",
+      maxBuffer: MAX_BUFFER,
+      timeout: TIMEOUT_MS,
+    });
+    const lines = stdout.split("\n").filter(Boolean);
+    const text =
+      lines.length > MAX_LINES
+        ? lines.slice(0, MAX_LINES).join("\n") + `\n\n... (${lines.length - MAX_LINES} more lines truncated)`
+        : stdout;
+    return { text: text || emptyMsg, matchCount: lines.length };
+  } catch (err: unknown) {
+    const error = err as { code?: number | string; stderr?: string; message?: string };
+    if (error.code === 1) {
+      return { text: emptyMsg, matchCount: 0 };
+    }
+    throw new Error(error.stderr?.trim() || error.message || "unknown error");
+  }
+}
+
+/** Quote an arg for human-readable display only (execution uses an arg array, no shell). */
+function quoteForDisplay(arg: string): string {
+  return arg.includes("*") || arg.includes(" ") ? `'${arg}'` : arg;
+}
+
+function displayCmd(name: string, args: string[]): string {
+  return `${name} ${args.map(quoteForDisplay).join(" ")}`;
+}
+
+/** Shared result/error handling for the rg and fd tools. */
+async function executeSearch(name: string, bin: string, args: string[], cwd: string, emptyMsg: string) {
+  const command = displayCmd(name, args);
+  try {
+    const { text, matchCount } = await runSearch(bin, args, cwd, emptyMsg);
+    return {
+      content: [{ type: "text" as const, text }],
+      details: { command, matchCount },
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    return {
+      content: [{ type: "text" as const, text: `${name} error: ${message}` }],
+      details: { command },
+      isError: true,
+    };
+  }
+}
+
 export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "rg",
@@ -69,68 +137,14 @@ export default function (pi: ExtensionAPI) {
 
       if (params.ignoreCase) args.push("-i");
       if (params.fixedStrings) args.push("-F");
-      if (params.glob) {
-        args.push("--glob", params.glob);
-      }
-      if (params.context) {
-        args.push("-C", String(params.context));
-      }
-      if (params.maxResults) {
-        args.push("-m", String(params.maxResults));
-      }
+      if (params.glob) args.push("--glob", params.glob);
+      if (params.context) args.push("-C", String(params.context));
+      if (params.maxResults) args.push("-m", String(params.maxResults));
 
       args.push(params.pattern);
-      if (params.path) {
-        args.push(params.path);
-      }
+      if (params.path) args.push(params.path);
 
-      const escapedCmd = `${RG_BIN} ${args.map(escapeArg).join(" ")}`;
-      const displayCmd = `rg ${args.map(a => a.includes("*") || a.includes(" ") ? `'${a}'` : a).join(" ")}`;
-
-      try {
-        const stdout = execSync(escapedCmd, {
-          cwd: ctx.cwd,
-          encoding: "utf-8",
-          maxBuffer: 10 * 1024 * 1024,
-          timeout: 30_000,
-          stdio: ["ignore", "pipe", "pipe"],
-        });
-
-        const lines = stdout.split("\n").filter(Boolean);
-        const result =
-          lines.length > 500
-            ? lines.slice(0, 500).join("\n") +
-              `\n\n... (${lines.length - 500} more lines truncated)`
-            : stdout;
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `${result || "(no matches found)"}`,
-            },
-          ],
-          details: { command: displayCmd, matchCount: lines.length },
-        };
-      } catch (err: unknown) {
-        const error = err as { stderr?: string; message?: string; status?: number };
-        if (error.status === 1) {
-          return {
-            content: [{ type: "text", text: `(no matches found)` }],
-            details: { command: displayCmd, matchCount: 0 },
-          };
-        }
-        return {
-          content: [
-            {
-              type: "text",
-              text: `rg error: ${error.stderr?.trim() || error.message || "unknown error"}`,
-            },
-          ],
-          details: { command: displayCmd },
-          isError: true,
-        };
-      }
+      return executeSearch("rg", RG_BIN, args, ctx.cwd, "(no matches found)");
     },
   });
 
@@ -191,57 +205,9 @@ export default function (pi: ExtensionAPI) {
       if (params.caseSensitive) args.push("--case-sensitive");
 
       args.push(params.pattern || ".");
-      if (params.path) {
-        args.push(params.path);
-      }
+      if (params.path) args.push(params.path);
 
-      const escapedCmd = `${FD_BIN} ${args.map(escapeArg).join(" ")}`;
-      const displayCmd = `fd ${args.map(a => a.includes("*") || a.includes(" ") ? `'${a}'` : a).join(" ")}`;
-
-      try {
-        const stdout = execSync(escapedCmd, {
-          cwd: ctx.cwd,
-          encoding: "utf-8",
-          maxBuffer: 10 * 1024 * 1024,
-          timeout: 30_000,
-          stdio: ["ignore", "pipe", "pipe"],
-        });
-
-        const lines = stdout.split("\n").filter(Boolean);
-        const result =
-          lines.length > 500
-            ? lines.slice(0, 500).join("\n") +
-              `\n\n... (${lines.length - 500} more results truncated)`
-            : stdout;
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `${result || "(no files found)"}`,
-            },
-          ],
-          details: { command: displayCmd, matchCount: lines.length },
-        };
-      } catch (err: unknown) {
-        const error = err as { stderr?: string; message?: string; status?: number };
-        if (error.status === 1) {
-          return {
-            content: [{ type: "text", text: `(no files found)` }],
-            details: { command: displayCmd, matchCount: 0 },
-          };
-        }
-        return {
-          content: [
-            {
-              type: "text",
-              text: `fd error: ${error.stderr?.trim() || error.message || "unknown error"}`,
-            },
-          ],
-          details: { command: displayCmd },
-          isError: true,
-        };
-      }
+      return executeSearch("fd", FD_BIN, args, ctx.cwd, "(no files found)");
     },
   });
 
@@ -274,8 +240,4 @@ export default function (pi: ExtensionAPI) {
       }
     }
   });
-}
-
-function escapeArg(arg: string): string {
-  return `'${arg.replace(/'/g, "'\\''")}'`;
 }

@@ -147,43 +147,4 @@ export default async function (pi: ExtensionAPI) {
       models: anthropicModels.map((m) => ({ ...m, api: undefined, compat: { forceAdaptiveThinking: true } })),
     });
   }
-
-  const RELAY_ERR = /\b401\b|"type"\s*:\s*"<nil>"|unauthorized|invalid[\s_-]?api[\s_-]?key/i;
-  const MAX_RESEND = 5;
-  const RETRY_MESSAGES = ["ok", "continue"];
-  let resendAttempt = 0;
-  let resending = false;
-
-  pi.on("agent_end", async (event, ctx) => {
-    const msgs = event.messages ?? [];
-    let lastAssistant: { role?: string; stopReason?: string; errorMessage?: string } | undefined;
-    for (let i = msgs.length - 1; i >= 0; i--) {
-      if (msgs[i].role === "assistant") { lastAssistant = msgs[i]; break; }
-    }
-    if (!lastAssistant || lastAssistant.stopReason !== "error") return;
-    if (!RELAY_ERR.test(String(lastAssistant.errorMessage ?? ""))) return;
-
-    const provider = ctx.model?.provider;
-    if (provider !== "vsllm" && provider !== "vsllm-anthropic") return;
-
-    if (resendAttempt >= MAX_RESEND) {
-      ctx.ui.notify(`VSLLM relay error after ${MAX_RESEND} auto-retries. Set VSLLM_API_KEY or resend manually.`, "error");
-      return;
-    }
-    resendAttempt++;
-    const delayMs = 5000;
-    ctx.ui.setStatus("vsllm-resend", `Relay error — auto-retrying ${resendAttempt}/${MAX_RESEND} in ${Math.round(delayMs / 1000)}s…`);
-    await new Promise((r) => setTimeout(r, delayMs));
-    ctx.ui.setStatus("vsllm-resend", undefined);
-
-    if (!ctx.isIdle()) return;
-
-    resending = true;
-    pi.sendUserMessage(RETRY_MESSAGES[(resendAttempt - 1) % RETRY_MESSAGES.length]);
-  });
-
-  pi.on("before_agent_start", () => {
-    if (resending) resending = false;
-    else resendAttempt = 0;
-  });
 }
