@@ -14,7 +14,7 @@ The repo lives at `~/.pi/agent/` (the pi config root) and is checked in directly
 ├── extensions/         # Pi extensions (auto-discovered by pi)
 │   ├── commit.ts       # /commit command + git_commit tool; blocks mutative git in bash
 │   ├── error-retry.ts  # Auto-retry auth (401) errors from cloud relays
-│   ├── fast-search.ts  # rg + fd tools; blocks grep/find in bash
+│   ├── fast-search.ts  # Auto-rewrites grep→rg and find→fd inside bash commands
 │   ├── focus-caret.ts  # Green visible cursor; hides caret while typing slash commands
 │   ├── freetheai.ts    # FreeTheAI provider
 │   ├── messages.ts     # /msg, /change-msg, /show-msg commands
@@ -64,10 +64,16 @@ so TypeScript works without a build step. Each file exports a default factory
 
 ### Tools
 
-#### `fast-search.ts` — `rg` / `fd` tools
-Registers `rg` (ripgrep) and `fd` (fd-find) tools that wrap the system binaries, and blocks the
-slow built-in `grep`/`find` tools (and `grep`/`find` invoked through `bash`). Binaries are located
-via `PATH` plus a few common directories (`~/.pi/agent/bin`, `~/.local/bin`, `~/.cargo/bin`).
+#### `fast-search.ts` — transparent `grep`→`rg` / `find`→`fd` rewriting
+Instead of registering separate `rg`/`fd` tools and blocking `grep`/`find` (which forces the
+model to reformulate the command), this extension rewrites `grep`/`egrep`/`fgrep` → `rg` and
+`find` → `fd` **in place** inside `bash` commands before they run, via pi's mutable
+`tool_call` input. The few flags that differ dangerously are handled explicitly (verified
+against rg 13 / fd 10) — notably `grep -r` is dropped because `rg -r` means `--replace`, and
+`grep -E`/`-G`/`-P`(-P kept) and the regex/`--include`/`--exclude` flags are normalized. `find`
+expressions using modelled primaries (`-name`/`-iname`/`-path`/`-type`/`-maxdepth`/`-mindepth`)
+are translated to `fd`; anything else (`-exec`, `-delete`, boolean logic, …) is left untouched so
+it still runs correctly. The built-in `grep`/`find` tools remain blocked as a safety net.
 
 #### `commit.ts` — `/commit` + `git_commit`
 Stages changes and shows the diff via `/commit`, then exposes a single-use `git_commit` tool
