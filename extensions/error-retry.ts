@@ -14,6 +14,13 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
  * The provider is read from the failing message's own `provider` field, which is
  * always populated (unlike `ctx.model`, which is not guaranteed at `agent_end`).
  *
+ * Counter semantics: `attempts` only stays > 0 across CONSECUTIVE 401 retries.
+ * It resets to 0 the moment a turn ends any other way — success, abort, a
+ * non-auth error, or after exhausting MAX_ATTEMPTS. This reset is driven entirely
+ * by `agent_end` (which fires for every turn, including followUp-triggered ones),
+ * NOT by `before_agent_start`, which does NOT fire for followUp turns and would
+ * therefore leave the counter stuck.
+ *
  * Tune RELAY_PROVIDERS to your providers, or set it to null to retry 401s from
  * every provider.
  */
@@ -33,12 +40,21 @@ const MAX_DELAY_MS = 30_000;
 const RETRY_MESSAGES = ["ok", "continue"];
 
 let attempts = 0;
-let resending = false;
 let lastProvider = "(none)";
 let lastError = "(none)";
 
 function backoffMs(attempt: number): number {
   return Math.min(BASE_DELAY_MS * 2 ** (attempt - 1), MAX_DELAY_MS);
+}
+
+function isRetryableAuthError(
+  last: { stopReason?: string; provider?: string; errorMessage?: string } | undefined,
+): last is { stopReason: string; provider: string; errorMessage: string } {
+  if (!last || last.stopReason !== "error") return false;
+  const errorMessage = String(last.errorMessage ?? "");
+  if (!AUTH_ERR.test(errorMessage)) return false;
+  if (RELAY_PROVIDERS && !RELAY_PROVIDERS.has(last.provider ?? "")) return false;
+  return true;
 }
 
 export default function (pi: ExtensionAPI) {
@@ -70,21 +86,18 @@ export default function (pi: ExtensionAPI) {
         break;
       }
     }
-    if (!lastAssistant || lastAssistant.stopReason !== "error") return;
 
-    const provider = lastAssistant.provider ?? "(unknown)";
-    const errorMessage = String(lastAssistant.errorMessage ?? "");
-    lastProvider = provider;
-    lastError = errorMessage;
-
-    if (!AUTH_ERR.test(errorMessage)) {
-      console.error(
-        `[error-retry] non-auth error from ${provider}, not retrying: ${errorMessage.slice(0, 140)}`,
-      );
-      return;
+    const provider = lastAssistant?.provider ?? "(unknown)";
+    const errorMessage = String(lastAssistant?.errorMessage ?? "");
+    if (lastAssistant) {
+      lastProvider = provider;
+      lastError = errorMessage;
     }
-    if (RELAY_PROVIDERS && !RELAY_PROVIDERS.has(provider)) {
-      console.error(`[error-retry] auth error from ${provider} not in relay set, not retrying`);
+
+    // Any non-retryable outcome ends the retry sequence and resets the counter.
+    // (covers success, abort, and non-auth errors alike)
+    if (!isRetryableAuthError(lastAssistant)) {
+      attempts = 0;
       return;
     }
 
@@ -93,6 +106,7 @@ export default function (pi: ExtensionAPI) {
         `Auth error from ${provider} after ${MAX_ATTEMPTS} auto-retries. Check the API key or resend manually.`,
         "error",
       );
+      attempts = 0; // reset so a later turn can retry fresh
       return;
     }
 
@@ -104,17 +118,6 @@ export default function (pi: ExtensionAPI) {
     await new Promise((r) => setTimeout(r, delayMs));
     ctx.ui.setStatus("error-retry", undefined);
 
-    resending = true;
     pi.sendUserMessage(RETRY_MESSAGES[(attempts - 1) % RETRY_MESSAGES.length], { deliverAs: "followUp" });
-  });
-
-  pi.on("before_agent_start", () => {
-    if (resending) {
-      // This turn is our auto-retry; keep the attempt count rolling.
-      resending = false;
-    } else {
-      // A genuine user turn; reset the retry counter.
-      attempts = 0;
-    }
   });
 }

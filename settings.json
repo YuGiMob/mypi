@@ -11,5 +11,8 @@
   "compaction": {
     "enabled": true
   },
+  "retry": {
+    "baseDelayMs": 5000
+  },
   "theme": "dark"
 }
