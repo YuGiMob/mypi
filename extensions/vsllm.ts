@@ -65,7 +65,7 @@ const DEFAULT_META: ModelMeta = {
 };
 
 export default async function (pi: ExtensionAPI) {
-  const baseUrl = "https://vsllm.com/v1";
+  const baseUrl = "https://api.vsllm.com/v1";
 
   const apiKey = process.env.VSLLM_API_KEY;
   if (!apiKey) {
@@ -131,7 +131,7 @@ export default async function (pi: ExtensionAPI) {
       api: "openai-completions",
       compat: {
         supportsDeveloperRole: false,
-        supportsReasoningEffort: true,
+        supportsReasoningEffort: false,
       },
       models: openaiModels,
     });
@@ -140,7 +140,7 @@ export default async function (pi: ExtensionAPI) {
   if (anthropicModels.length > 0) {
     pi.registerProvider("vsllm-anthropic", {
       name: "VSLLM (Anthropic)",
-      baseUrl: "https://vsllm.com",
+      baseUrl: "https://api.vsllm.com",
       apiKey,
       api: "anthropic-messages",
       compat: { forceAdaptiveThinking: true },
