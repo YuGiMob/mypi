@@ -1,29 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-/**
- * Centralized auto-retry for transient AUTH errors (401 / "unauthorized" /
- * "身份验证失败" / "invalid api key") from cloud relays. These relays occasionally
- * return a 401 as a glitch rather than a genuine bad-key failure, so a short
- * backoff can recover — pi's built-in retry only covers transient errors
- * (5xx / overloaded / rate-limit), NOT auth, so 401s would otherwise just fail.
- *
- * IMPORTANT: pi loads extensions only at startup (or after `/reload`). Editing
- * this file does NOT affect a running session until you `/reload`. Run
- * `/retry-status` to confirm this extension is loaded.
- *
- * The provider is read from the failing message's own `provider` field, which is
- * always populated (unlike `ctx.model`, which is not guaranteed at `agent_end`).
- *
- * Counter semantics: `attempts` only stays > 0 across CONSECUTIVE 401 retries.
- * It resets to 0 the moment a turn ends any other way — success, abort, a
- * non-auth error, or after exhausting MAX_ATTEMPTS. This reset is driven entirely
- * by `agent_end` (which fires for every turn, including followUp-triggered ones),
- * NOT by `before_agent_start`, which does NOT fire for followUp turns and would
- * therefore leave the counter stuck.
- *
- * Tune RELAY_PROVIDERS to your providers, or set it to null to retry 401s from
- * every provider.
- */
 const RELAY_PROVIDERS: ReadonlySet<string> | null = new Set([
   "vsllm",
   "vsllm-anthropic",
@@ -94,8 +70,6 @@ export default function (pi: ExtensionAPI) {
       lastError = errorMessage;
     }
 
-    // Any non-retryable outcome ends the retry sequence and resets the counter.
-    // (covers success, abort, and non-auth errors alike)
     if (!isRetryableAuthError(lastAssistant)) {
       attempts = 0;
       return;
@@ -106,7 +80,7 @@ export default function (pi: ExtensionAPI) {
         `Auth error from ${provider} after ${MAX_ATTEMPTS} auto-retries. Check the API key or resend manually.`,
         "error",
       );
-      attempts = 0; // reset so a later turn can retry fresh
+      attempts = 0;
       return;
     }
 
@@ -118,6 +92,6 @@ export default function (pi: ExtensionAPI) {
     await new Promise((r) => setTimeout(r, delayMs));
     ctx.ui.setStatus("error-retry", undefined);
 
-    pi.sendUserMessage(RETRY_MESSAGES[(attempts - 1) % RETRY_MESSAGES.length], { deliverAs: "followUp" });
+    pi.sendUserMessage(RETRY_MESSAGES[(attempts - 1) % RETRY_MESSAGES.length], { deliverAs: "steer" });
   });
 }

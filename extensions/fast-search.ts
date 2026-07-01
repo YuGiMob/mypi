@@ -1,37 +1,18 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
 
-/**
- * fast-search — transparent grep→rg / find→fd rewriting.
- *
- * Instead of registering separate rg/fd tools and blocking grep/find (which
- * forces a costly round-trip where the model reformulates the command), this
- * extension rewrites grep/egrep/fgrep → rg and find → fd directly inside bash
- * commands before they run. The model and the user never have to notice.
- *
- * How: pi's `tool_call` event lets handlers mutate `event.input` in place. We
- * parse the bash command into shell tokens (quote- and bracket-aware), translate
- * any grep/find segments, and write the result back. Translation is conservative:
- * if a find expression uses primaries we don't model, that segment is left
- * untouched (it still runs correctly, just slower).
- *
- * Flag compatibility is the tricky part — rg and grep share many flags but a few
- * differ dangerously, e.g. `grep -r` (recursive) vs `rg -r` (--replace, which
- * silently swallows the next argument). Those few are handled explicitly
- * (verified against rg 13 / fd 10); the rest pass through verbatim.
- *
- * Built-in `grep`/`find` tools are still blocked as a safety net: they are slow
- * and, with the rg/fd tools gone, there is nothing to convert them into.
- */
+const conversions = new Map<string, { original: string; converted: string; notes: string[] }>();
 
 export default function (pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
     if (isToolCallEventType("bash", event)) {
-      const out = rewriteCommand(event.input.command);
+      const original = event.input.command;
+      const out = rewriteCommand(original);
       if (out) {
+        const notes = [...new Set(out.notes)];
+        conversions.set(event.toolCallId, { original, converted: out.command, notes });
         event.input.command = out.command;
-        const tools = [...new Set(out.notes)].join(", ");
-        ctx?.ui?.notify(`fast-search ⟳ ${tools} → ${out.command}`.slice(0, 120), "info");
+        ctx?.ui?.notify(`fast-search ⟳ ${notes.join(", ")} — see result for before→after`, "info");
       }
       return undefined;
     }
@@ -45,11 +26,23 @@ export default function (pi: ExtensionAPI) {
 
     return undefined;
   });
-}
 
-// ---------------------------------------------------------------------------
-// Command rewriting
-// ---------------------------------------------------------------------------
+  pi.on("tool_result", async (event) => {
+    if (event.toolName !== "bash") return undefined;
+    const conv = conversions.get(event.toolCallId);
+    if (!conv) return undefined;
+    conversions.delete(event.toolCallId);
+
+    const note =
+      `fast-search ⟳ ${conv.notes.join(", ")}\n` +
+      `  was: ${conv.original}\n` +
+      `  now: ${conv.converted}`;
+
+    return {
+      content: [{ type: "text", text: note }, ...event.content],
+    };
+  });
+}
 
 function rewriteCommand(command: string): { command: string; notes: string[] } | null {
   const segments = splitSegments(command);
@@ -77,17 +70,9 @@ function translateSegment(tokens: Token[]): { result: string | null; note?: stri
   return { result: null };
 }
 
-// ---------------------------------------------------------------------------
-// grep → rg
-// ---------------------------------------------------------------------------
-
-/** grep short flags that are incompatible or change meaning in rg → drop. */
 const GREP_DROP_SHORT = new Set(["r", "R", "E", "G", "T", "u", "U", "I", "L", "s", "d", "D", "y", "M"]);
-/** grep short flags that take the next argument (or rest of the bundle) as a value. */
 const GREP_VALUE_SHORT = new Set(["A", "B", "C", "m", "e", "f"]);
-/** grep short flag → a different rg short flag (e.g. -h no-filename → rg -I). */
 const GREP_XLATE_SHORT: Record<string, string> = { h: "I", Z: "0" };
-/** grep long flags to drop (rg equivalents differ or are absent). */
 const GREP_DROP_LONG = new Set([
   "recursive", "dereference-recursive", "extended-regexp", "basic-regexp", "no-messages",
   "initial-tabs", "unix-byte-offsets", "binary", "directories", "line-buffered", "null-data",
@@ -101,7 +86,6 @@ function translateGrep(cmd: string, tokens: Token[]): string {
     const val = tokens[i].value;
 
     if (val === "--") {
-      // Everything after `--` is positional; emit verbatim and stop processing.
       out.push(tokens[i].raw);
       for (let j = i + 1; j < tokens.length; j++) out.push(tokens[j].raw);
       break;
@@ -124,7 +108,7 @@ function translateGrep(cmd: string, tokens: Token[]): string {
         continue;
       }
 
-      out.push(tokens[i].raw); // unknown long flag: pass through (rg errors visibly if unsupported)
+      out.push(tokens[i].raw);
       continue;
     }
 
@@ -139,13 +123,12 @@ function translateGrep(cmd: string, tokens: Token[]): string {
         if (c in GREP_XLATE_SHORT) {
           kept += GREP_XLATE_SHORT[c];
         } else if (GREP_DROP_SHORT.has(c)) {
-          // dropped
         } else if (GREP_VALUE_SHORT.has(c)) {
           const rest = chars.slice(k + 1);
           flushKept();
           out.push(`-${c}`);
-          if (rest) out.push(quote(rest)); // e.g. -C2 → -C 2
-          else {                              // e.g. -C 2 → -C 2 (value is the next token)
+          if (rest) out.push(quote(rest));
+          else {
             const next = tokens[++i]?.raw;
             if (next !== undefined) out.push(next);
           }
@@ -158,15 +141,11 @@ function translateGrep(cmd: string, tokens: Token[]): string {
       continue;
     }
 
-    out.push(tokens[i].raw); // positional (pattern / file) — keep verbatim
+    out.push(tokens[i].raw);
   }
 
   return out.join(" ");
 }
-
-// ---------------------------------------------------------------------------
-// find → fd  (common primaries only; unknown expressions are left as `find`)
-// ---------------------------------------------------------------------------
 
 const FIND_TYPE = /^[fdlbcps]$/;
 
@@ -180,7 +159,7 @@ function translateFind(tokens: Token[]): string | null {
     const val = tokens[i].value;
 
     if (val === "-name" || val === "-iname" || val === "-path") {
-      if (pattern !== null) return null; // multiple patterns: bail out
+      if (pattern !== null) return null;
       const p = tokens[++i]?.value;
       if (p === undefined) return null;
       pattern = p;
@@ -200,13 +179,11 @@ function translateFind(tokens: Token[]): string | null {
       continue;
     }
     if (val.startsWith("-")) {
-      // Any other primary/option we don't model → leave the whole command as find.
       return null;
     }
-    paths.push(val); // positional search path(s)
+    paths.push(val);
   }
 
-  // find -name/-iname/-path are globs; fd is regex by default, so request glob mode.
   if (pattern !== null) out.push("--glob");
   if (pathFlag) out.push("-p");
   out.push(pattern !== null ? quote(pattern) : ".");
@@ -214,25 +191,21 @@ function translateFind(tokens: Token[]): string | null {
   return out.join(" ");
 }
 
-// ---------------------------------------------------------------------------
-// Shell tokenizer (quote- and bracket-aware)
-// ---------------------------------------------------------------------------
-
 interface Token {
-  raw: string; // original substring, quotes/escapes intact
-  value: string; // unquoted value
+  raw: string;
+  value: string;
 }
 interface Segment {
-  sep: string; // operator + whitespace preceding this segment
-  original: string; // `sep` + the segment body, verbatim (used when untranslated)
+  sep: string;
+  original: string;
   tokens: Token[];
 }
 
 function splitSegments(command: string): Segment[] {
-  const s = command.replace(/\\\r?\n/g, " "); // join line continuations
+  const s = command.replace(/\\\r?\n/g, " ");
   const toks: Token[] = [];
-  const gaps: string[] = []; // substring preceding each token
-  const newSegs: boolean[] = []; // does that substring contain a command separator?
+  const gaps: string[] = [];
+  const newSegs: boolean[] = [];
 
   let i = 0;
   const n = s.length;
@@ -275,7 +248,7 @@ function splitSegments(command: string): Segment[] {
 
     if (depth === 0 && (c === ";" || c === "&" || c === "|" || c === "\n")) {
       flush(i);
-      gapHasSep = true; // the gap before the next token contains a separator
+      gapHasSep = true;
       i += (c === "&" && s[i + 1] === "&") || (c === "|" && s[i + 1] === "|") ? 2 : 1;
       continue;
     }
@@ -314,10 +287,6 @@ function makeSegment(sep: string, tokens: Token[], gaps: string[]): Segment {
   const body = tokens.map((t, idx) => (idx === 0 ? "" : gaps[idx]) + t.raw).join("");
   return { sep, original: sep + body, tokens };
 }
-
-// ---------------------------------------------------------------------------
-// Quoting / dequoting helpers
-// ---------------------------------------------------------------------------
 
 function unquote(raw: string): string {
   let out = "";
@@ -360,7 +329,6 @@ function quote(value: string): string {
   return `'${value.replace(/'/g, "'\\''")}'`;
 }
 
-/** Command name from a token value, stripping a leading path and/or backslash escapes. */
 function basename(value: string): string {
   return value.replace(/^\\+/, "").replace(/^.*\//, "");
 }
