@@ -12,7 +12,7 @@ export default function (pi: ExtensionAPI) {
         const notes = [...new Set(out.notes)];
         conversions.set(event.toolCallId, { original, converted: out.command, notes });
         event.input.command = out.command;
-        ctx?.ui?.notify(`fast-search ⟳ ${notes.join(", ")} — see result for before→after`, "info");
+        ctx?.ui?.notify(`fast-search ⟳ ${notes.join(", ")} — ${original} → ${out.command}`, "info");
       }
       return undefined;
     }
@@ -70,13 +70,16 @@ function translateSegment(tokens: Token[]): { result: string | null; note?: stri
   return { result: null };
 }
 
-const GREP_DROP_SHORT = new Set(["r", "R", "E", "G", "T", "u", "U", "I", "L", "s", "d", "D", "y", "M"]);
+const GREP_DROP_SHORT = new Set(["r", "R", "E", "G", "T", "u", "U", "I", "s", "y", "M"]);
 const GREP_VALUE_SHORT = new Set(["A", "B", "C", "m", "e", "f"]);
+const GREP_VALUE_DROP_SHORT = new Set(["d", "D"]);
+const GREP_LONG_SHORT: Record<string, string> = { L: "--files-without-match" };
 const GREP_XLATE_SHORT: Record<string, string> = { h: "I", Z: "0" };
 const GREP_DROP_LONG = new Set([
   "recursive", "dereference-recursive", "extended-regexp", "basic-regexp", "no-messages",
-  "initial-tabs", "unix-byte-offsets", "binary", "directories", "line-buffered", "null-data",
+  "initial-tabs", "unix-byte-offsets", "binary", "line-buffered", "null-data",
 ]);
+const GREP_VALUE_DROP_LONG = new Set(["directories", "devices"]);
 
 function translateGrep(cmd: string, tokens: Token[]): string {
   const out: string[] = ["rg"];
@@ -97,6 +100,10 @@ function translateGrep(cmd: string, tokens: Token[]): string {
       const inlineVal = eq >= 0 ? val.slice(eq + 1) : undefined;
 
       if (GREP_DROP_LONG.has(longName)) continue;
+      if (GREP_VALUE_DROP_LONG.has(longName)) {
+        if (inlineVal === undefined) ++i; // value is the next token; consume and drop it
+        continue;
+      }
       if (longName === "perl-regexp") { out.push("-P"); continue; }
       if (longName === "null") { out.push("--null"); continue; }
       if (longName === "with-filename" || longName === "no-filename") { out.push(tokens[i].raw); continue; }
@@ -120,8 +127,16 @@ function translateGrep(cmd: string, tokens: Token[]): string {
       };
       for (let k = 0; k < chars.length; k++) {
         const c = chars[k];
-        if (c in GREP_XLATE_SHORT) {
+        if (c in GREP_LONG_SHORT) {
+          flushKept();
+          out.push(GREP_LONG_SHORT[c]);
+        } else if (c in GREP_XLATE_SHORT) {
           kept += GREP_XLATE_SHORT[c];
+        } else if (GREP_VALUE_DROP_SHORT.has(c)) {
+          const rest = chars.slice(k + 1);
+          flushKept();
+          if (!rest) ++i; // value is the next token; consume and drop it
+          break;
         } else if (GREP_DROP_SHORT.has(c)) {
         } else if (GREP_VALUE_SHORT.has(c)) {
           const rest = chars.slice(k + 1);
@@ -150,20 +165,24 @@ function translateGrep(cmd: string, tokens: Token[]): string {
 const FIND_TYPE = /^[fdlbcps]$/;
 
 function translateFind(tokens: Token[]): string | null {
-  const out: string[] = ["fd"];
+  // -H -I: find searches hidden and gitignored files too (fd hides them by default)
+  const out: string[] = ["fd", "-H", "-I"];
   const paths: string[] = [];
-  let pattern: string | null = null;
+  let patternRaw: string | null = null;
   let pathFlag = false;
+  let caseInsensitive = false;
 
   for (let i = 1; i < tokens.length; i++) {
     const val = tokens[i].value;
 
-    if (val === "-name" || val === "-iname" || val === "-path") {
-      if (pattern !== null) return null;
-      const p = tokens[++i]?.value;
-      if (p === undefined) return null;
-      pattern = p;
-      if (val === "-path") pathFlag = true;
+    if (val === "-name" || val === "-iname" || val === "-path" || val === "-ipath") {
+      if (patternRaw !== null) return null;
+      const patToken = tokens[++i];
+      if (!patToken) return null;
+      // keep the raw token so quoted shell vars (e.g. "$VAR") stay expandable
+      patternRaw = patToken.raw;
+      if (val === "-path" || val === "-ipath") pathFlag = true;
+      if (val === "-iname" || val === "-ipath") caseInsensitive = true;
       continue;
     }
     if (val === "-type") {
@@ -181,13 +200,17 @@ function translateFind(tokens: Token[]): string | null {
     if (val.startsWith("-")) {
       return null;
     }
-    paths.push(val);
+    paths.push(tokens[i].raw);
   }
 
-  if (pattern !== null) out.push("--glob");
+  if (patternRaw !== null) out.push("--glob");
+  // find -name/-path is case-sensitive; -iname/-ipath is case-insensitive.
+  // fd defaults to smart-case, so force the right mode explicitly.
+  if (caseInsensitive) out.push("-i");
+  else if (patternRaw !== null) out.push("-s");
   if (pathFlag) out.push("-p");
-  out.push(pattern !== null ? quote(pattern) : ".");
-  for (const p of paths) out.push(quote(p));
+  out.push(patternRaw ?? ".");
+  for (const p of paths) out.push(p);
   return out.join(" ");
 }
 
