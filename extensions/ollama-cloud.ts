@@ -5,51 +5,53 @@ interface ModelMeta {
   maxTokens: number;
   reasoning: boolean;
   vision: boolean;
+  thinkingFormat?: string;
+  thinkingLevelMap?: { [key: string]: string };
 }
 
 const KNOWN_MODELS: Record<string, ModelMeta> = {
   "gemma3:4b":         { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
   "gemma3:12b":        { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
   "gemma3:27b":        { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
-  "gemma4:31b":        { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: true  },
+  "gemma4:31b":        { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: true,  thinkingFormat: "deepseek" },
 
-  "qwen3-coder:480b":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
-  "qwen3-coder-next":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
-  "qwen3.5:397b":      { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
+  "qwen3-coder:480b":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false, thinkingFormat: "qwen" },
+  "qwen3-coder-next":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false, thinkingFormat: "qwen" },
+  "qwen3.5:397b":      { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false, thinkingFormat: "qwen" },
 
-  "deepseek-v3.1:671b": { contextWindow: 163_840, maxTokens: 32_768, reasoning: true,  vision: false },
-  "deepseek-v3.2":      { contextWindow: 160_000, maxTokens: 32_768, reasoning: true,  vision: false },
-  "deepseek-v4-pro":    { contextWindow: 1_048_576, maxTokens: 65_536, reasoning: true,  vision: false },
-  "deepseek-v4-flash":  { contextWindow: 1_048_576, maxTokens: 65_536, reasoning: true,  vision: false },
+  "deepseek-v3.1:671b": { contextWindow: 163_840, maxTokens: 32_768, reasoning: true,  vision: false, thinkingFormat: "deepseek", thinkingLevelMap: { minimal: "low", low: "low", medium: "medium", high: "high", xhigh: "max" } },
+  "deepseek-v3.2":      { contextWindow: 160_000, maxTokens: 32_768, reasoning: true,  vision: false, thinkingFormat: "deepseek", thinkingLevelMap: { minimal: "low", low: "low", medium: "medium", high: "high", xhigh: "max" } },
+  "deepseek-v4-pro":    { contextWindow: 1_048_576, maxTokens: 65_536, reasoning: true,  vision: false, thinkingFormat: "deepseek", thinkingLevelMap: { minimal: "low", low: "low", medium: "medium", high: "high", xhigh: "max" } },
+  "deepseek-v4-flash":  { contextWindow: 1_048_576, maxTokens: 65_536, reasoning: true,  vision: false, thinkingFormat: "deepseek", thinkingLevelMap: { minimal: "low", low: "low", medium: "medium", high: "high", xhigh: "max" } },
 
   "ministral-3:3b":         { contextWindow: 256_000, maxTokens: 4096,  reasoning: false, vision: false },
   "ministral-3:8b":         { contextWindow: 256_000, maxTokens: 4096,  reasoning: false, vision: false },
   "ministral-3:14b":        { contextWindow: 256_000, maxTokens: 4096,  reasoning: false, vision: false },
-  "mistral-large-3:675b":   { contextWindow: 128_000, maxTokens: 16384, reasoning: true,  vision: false },
+  "mistral-large-3:675b":   { contextWindow: 128_000, maxTokens: 16384, reasoning: true,  vision: false, thinkingFormat: "deepseek" },
 
   "devstral-small-2:24b":   { contextWindow: 128_000, maxTokens: 16384, reasoning: false, vision: false },
-  "devstral-2:123b":        { contextWindow: 128_000, maxTokens: 16384, reasoning: true,  vision: false },
+  "devstral-2:123b":        { contextWindow: 128_000, maxTokens: 16384, reasoning: true,  vision: false, thinkingFormat: "deepseek" },
 
   "glm-4.7":    { contextWindow: 198_000, maxTokens: 8192,   reasoning: false, vision: false },
-  "glm-5":      { contextWindow: 198_000, maxTokens: 131_072, reasoning: true,  vision: false },
-  "glm-5.1":    { contextWindow: 198_000, maxTokens: 131_072, reasoning: true,  vision: false },
-  "glm-5.2":    { contextWindow: 976_000, maxTokens: 131_072, reasoning: true,  vision: false },
+  "glm-5":      { contextWindow: 198_000, maxTokens: 131_072, reasoning: true,  vision: false, thinkingFormat: "deepseek" },
+  "glm-5.1":    { contextWindow: 198_000, maxTokens: 131_072, reasoning: true,  vision: false, thinkingFormat: "deepseek" },
+  "glm-5.2":    { contextWindow: 976_000, maxTokens: 131_072, reasoning: true,  vision: false, thinkingFormat: "deepseek" },
 
-  "kimi-k2.5":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: true  },
-  "kimi-k2.6":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: true  },
-  "kimi-k2.7-code":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: true  },
+  "kimi-k2.5":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: true,  thinkingFormat: "deepseek" },
+  "kimi-k2.6":       { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: true,  thinkingFormat: "deepseek" },
+  "kimi-k2.7-code":  { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: true,  thinkingFormat: "deepseek" },
 
-  "gpt-oss:20b":    { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "gpt-oss:120b":   { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
+  "gpt-oss:20b":    { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false, thinkingFormat: "deepseek" },
+  "gpt-oss:120b":   { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false, thinkingFormat: "deepseek" },
 
   "minimax-m2.1":    { contextWindow: 200_000, maxTokens: 8192,  reasoning: false, vision: false },
   "minimax-m2.5":    { contextWindow: 198_000, maxTokens: 8192,  reasoning: false, vision: false },
-  "minimax-m2.7":    { contextWindow: 200_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "minimax-m3":      { contextWindow: 512_000, maxTokens: 16384, reasoning: true,  vision: true  },
+  "minimax-m2.7":    { contextWindow: 200_000, maxTokens: 8192,  reasoning: true,  vision: false, thinkingFormat: "deepseek" },
+  "minimax-m3":      { contextWindow: 512_000, maxTokens: 16384, reasoning: true,  vision: true,  thinkingFormat: "deepseek" },
 
-  "nemotron-3-nano:30b": { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "nemotron-3-super":    { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: false },
-  "nemotron-3-ultra":    { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false },
+  "nemotron-3-nano:30b": { contextWindow: 128_000, maxTokens: 8192,  reasoning: true,  vision: false, thinkingFormat: "deepseek" },
+  "nemotron-3-super":    { contextWindow: 256_000, maxTokens: 8192,  reasoning: true,  vision: false, thinkingFormat: "deepseek" },
+  "nemotron-3-ultra":    { contextWindow: 256_000, maxTokens: 16384, reasoning: true,  vision: false, thinkingFormat: "deepseek" },
 
   "gemini-3-flash-preview": { contextWindow: 1_000_000, maxTokens: 8192, reasoning: false, vision: true },
 
@@ -106,7 +108,8 @@ export default async function (pi: ExtensionAPI) {
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: meta.contextWindow,
       maxTokens: meta.maxTokens,
-      compat: { supportsDeveloperRole: false, supportsReasoningEffort: false },
+      compat: { supportsDeveloperRole: false, supportsReasoningEffort: true },
+      thinkingLevelMap: meta.thinkingLevelMap,
     };
   });
 
