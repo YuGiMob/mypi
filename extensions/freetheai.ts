@@ -1,9 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { type ModelMeta, DEFAULT_META } from "./lib/models.js";
 
-interface ModelMeta {
-  reasoning: boolean;
-  vision: boolean;
-}
 
 const KNOWN_MODELS: Record<string, ModelMeta> = {
   "agr/deepseek-v4-pro": { reasoning: true,  vision: false },
@@ -71,10 +68,6 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "xai/grok-tts": { reasoning: false, vision: false },
 };
 
-const DEFAULT_META: ModelMeta = {
-  reasoning: false,
-  vision: false,
-};
 
 export default async function (pi: ExtensionAPI) {
   const baseUrl = "https://api.freetheai.xyz/v1";
@@ -144,7 +137,7 @@ export default async function (pi: ExtensionAPI) {
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: m.contextWindow,
       maxTokens: m.maxTokens,
-      compat: { supportsDeveloperRole: false, supportsReasoningEffort: false },
+      compat: { supportsDeveloperRole: false, supportsReasoningEffort: meta.reasoning },
     };
   });
 

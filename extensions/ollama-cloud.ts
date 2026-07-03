@@ -1,13 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { type ModelMeta, DEFAULT_META } from "./lib/models.js";
 
-interface ModelMeta {
-  contextWindow: number;
-  maxTokens: number;
-  reasoning: boolean;
-  vision: boolean;
-  thinkingFormat?: string;
-  thinkingLevelMap?: { [key: string]: string };
-}
 
 const KNOWN_MODELS: Record<string, ModelMeta> = {
   "gemma3:4b":         { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
@@ -58,12 +51,6 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "rnj-1:8b": { contextWindow: 128_000, maxTokens: 8192, reasoning: false, vision: false },
 };
 
-const DEFAULT_META: ModelMeta = {
-  contextWindow: 128_000,
-  maxTokens: 8192,
-  reasoning: false,
-  vision: false,
-};
 
 export default async function (pi: ExtensionAPI) {
   const baseUrl = "https://ollama.com/v1";
