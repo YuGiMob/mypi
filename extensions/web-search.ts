@@ -46,9 +46,6 @@ interface PerplexityResponse {
 }
 
 export default function webSearchExtension(pi: ExtensionAPI) {
-  pi.on("session_start", async (_event, ctx) => {
-    ctx.ui.notify("Web search extension loaded", "info");
-  });
 
   pi.registerTool({
     name: "web_search",

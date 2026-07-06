@@ -2,5 +2,6 @@
   "1": "Read the entirety of the codebase of this project to be able to understand it's architecture and coding standards accurately",
   "2": "I want you to inform me about all of the improvements you can think of for this project",
   "3": "Are these improvements actually adding value to the application? Are these really worth implementing?",
-  "4": "How would you go about reducing the amount of (duplicated) code in the codebase while retaining functionality?"
+  "4": "How would you go about reducing the amount of (duplicated) code in the codebase while retaining functionality?",
+  "5": "I need you to stress test the replace tool on a temp file"
 }
