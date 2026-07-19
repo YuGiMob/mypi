@@ -95,7 +95,7 @@ export default async function (pi: ExtensionAPI) {
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: meta.contextWindow,
       maxTokens: meta.maxTokens,
-      compat: { supportsDeveloperRole: false, supportsReasoningEffort: true },
+      compat: { supportsDeveloperRole: false, supportsReasoningEffort: meta.reasoning },
       thinkingLevelMap: meta.thinkingLevelMap,
     };
   });

@@ -31,6 +31,8 @@ function updateCursor() {
 
 export default function (pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
+    if (interval) clearInterval(interval);
+    unsubscribe?.();
     showCursor();
     interval = setInterval(updateCursor, 20);
 

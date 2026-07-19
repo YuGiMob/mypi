@@ -83,21 +83,6 @@ export default function webSearchExtension(pi: ExtensionAPI) {
     },
   });
 
-  pi.registerCommand("websearch", {
-    description: "Web search settings: /websearch <config>",
-    handler: async (args, ctx) => {
-      if (!args) {
-        ctx.ui.notify("Web search extension active. Tool: web_search", "info");
-        return;
-      }
-      const action = args.split(" ").filter(Boolean)[0];
-      if (action === "reset") {
-        ctx.ui.notify("Web search reset", "info");
-      } else {
-        ctx.ui.notify(`Unknown action: ${action}`, "warning");
-      }
-    },
-  });
 }
 
 async function webSearch(query: string, numResults: number, signal: AbortSignal): Promise<SearchResult[]> {
@@ -185,7 +170,9 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
           return { title, url, content: desc || line.slice(0, 200) };
         });
       }
-    } catch {
+    } catch (err) {
+      console.error("[web-search] Perplexity search failed:", err);
+      throw new Error(`Perplexity search failed: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   }
 
