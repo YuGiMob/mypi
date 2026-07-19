@@ -109,8 +109,11 @@ export default async function (pi: ExtensionAPI) {
       if (resp.ok) {
         const data = (await resp.json()) as { data: Array<{ id: string }> };
         apiModels = data.data.map((m) => ({ id: m.id, contextWindow: 128_000, maxTokens: 8192 }));
+      } else {
+        console.error(`[freetheai] Fallback fetch failed: ${resp.status}`);
       }
-    } catch {
+    } catch (err) {
+      console.error(`[freetheai] Fallback fetch failed:`, err);
     }
   }
 

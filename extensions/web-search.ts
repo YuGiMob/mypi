@@ -101,6 +101,7 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
       const data = (await response.json()) as ExaResponse;
       return data.results.map((r) => ({ title: r.title, url: r.url, content: r.content?.text || "" }));
     }
+      console.error(`[web-search] Exa search failed: ${response.status}`);
   }
 
   const braveKey = process.env.BRAVE_SEARCH_API_KEY;
@@ -116,6 +117,7 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
       const data = (await response.json()) as BraveResponse;
       return (data.web?.results || []).map((r) => ({ title: r.title, url: r.url, content: r.description || "" }));
     }
+      console.error(`[web-search] Brave search failed: ${response.status}`);
   }
 
   const tavilyKey = process.env.TAVILY_API_KEY;
@@ -136,6 +138,7 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
       const data = (await response.json()) as TavilyResponse;
       return (data.results || []).map((r) => ({ title: r.title, url: r.url, content: r.content || "" }));
     }
+      console.error(`[web-search] Tavily search failed: ${response.status}`);
   }
 
   const perplexityKey = process.env.PERPLEXITY_API_KEY;
@@ -170,9 +173,9 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
           return { title, url, content: desc || line.slice(0, 200) };
         });
       }
+      console.error(`[web-search] Perplexity search failed: ${response.status}`);
     } catch (err) {
-      console.error("[web-search] Perplexity search failed:", err);
-      throw new Error(`Perplexity search failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+      console.error(`[web-search] Perplexity search failed:`, err);
     }
   }
 

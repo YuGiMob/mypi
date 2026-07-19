@@ -74,8 +74,11 @@ export default async function (pi: ExtensionAPI) {
       if (resp.ok) {
         const data = (await resp.json()) as { data: Array<{ id: string }> };
         modelIds = data.data.map((m) => m.id);
+      } else {
+        console.error(`[ollama-cloud] Fallback fetch failed: ${resp.status}`);
       }
-    } catch {
+    } catch (err) {
+      console.error(`[ollama-cloud] Fallback fetch failed:`, err);
     }
   }
 
