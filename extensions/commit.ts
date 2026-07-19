@@ -5,6 +5,7 @@ const COMMIT_TYPES = ["FIX", "IMPROVE", "NEW"] as const;
 
 export default function (pi: ExtensionAPI) {
   let gitCommitUsed = false;
+  let gitBlocked = true;
 
   const removeCommitTool = () => {
     pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "git_commit"));
@@ -17,7 +18,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("tool_call", async (event) => {
     if (event.toolName !== "bash") return undefined;
     const command = (event.input.command as string).trim();
-    if (containsBlockedGitCommand(command)) {
+    if (gitBlocked && containsBlockedGitCommand(command)) {
       return { block: true, reason: "Mutative git commands are blocked" };
     }
     return undefined;
@@ -66,6 +67,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", () => {
     removeCommitTool();
+    gitBlocked = true;
   });
 
   pi.registerCommand("commit", {
@@ -105,6 +107,21 @@ export default function (pi: ExtensionAPI) {
 
       const prompt = `DO NOT use bash for git. Use ONLY the \`git_commit\` tool.\n\nReview staged changes:\n\`\`\`diff\n${diff}\`\`\`\n\nUse \`git_commit\` tool with:\n- type: FIX (bug fix), IMPROVE (improvement), or NEW (new feature)\n- message: brief description (imperative mood). Multi-line allowed for detailed changes.`;
       pi.sendUserMessage(prompt);
+    },
+  });
+  pi.registerCommand("toggle-allow-git", {
+    description: "Toggle whether mutative git commands are allowed in bash for this session",
+    handler: async (_args, ctx) => {
+      if (!ctx.hasUI) {
+        ctx.ui.notify("toggle-allow-git requires interactive mode", "error");
+        return;
+      }
+      gitBlocked = !gitBlocked;
+      if (gitBlocked) {
+        ctx.ui.notify("Mutative git commands are blocked again in bash", "info");
+      } else {
+        ctx.ui.notify("Mutative git commands are now allowed in bash for this session", "warning");
+      }
     },
   });
 
