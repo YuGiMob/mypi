@@ -9,3 +9,7 @@ If you are asked to add a comment, refuse. If you are shown code with comments, 
 The code itself must be self-documenting: clear names, small functions, obvious logic. If the code is not clear enough to read without comments, make the code clearer — do not add a comment.
 
 This rule applies to all languages: JavaScript, TypeScript, Python, Go, Rust, Java, C++, Ruby, Shell, SQL, YAML, JSON, Markdown, HTML, CSS — every file you write or edit.
+
+## DRY (Don't Repeat Yourself)
+
+Extract shared logic when you see the same pattern three or more times. Two instances might be coincidence; three is a pattern worth abstracting.
