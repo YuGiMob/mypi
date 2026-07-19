@@ -11,7 +11,7 @@ export default function (pi: ExtensionAPI) {
     pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "git_commit"));
   };
   const containsBlockedGitCommand = (command: string): boolean => {
-    const blockedCommands = /\bgit\s+(add|commit|push|pull|fetch|merge|rebase|reset|clean|stash|rm|restore|checkout(?:\s+-[Bb])?|init|clone|branch|tag|submodule|worktree)/;
+    const blockedCommands = /\bgit\s+(add|commit|push|pull|fetch|merge|rebase|reset|clean|stash|rm|restore|checkout|switch|cherry-pick|revert|mv|init|clone|branch|tag|submodule|worktree)/;
     return blockedCommands.test(command);
   };
 

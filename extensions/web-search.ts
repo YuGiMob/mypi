@@ -101,7 +101,7 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
       const data = (await response.json()) as ExaResponse;
       return data.results.map((r) => ({ title: r.title, url: r.url, content: r.content?.text || "" }));
     }
-      console.error(`[web-search] Exa search failed: ${response.status}`);
+    throw new Error(`Exa search failed: ${response.status}`);
   }
 
   const braveKey = process.env.BRAVE_SEARCH_API_KEY;
@@ -117,7 +117,7 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
       const data = (await response.json()) as BraveResponse;
       return (data.web?.results || []).map((r) => ({ title: r.title, url: r.url, content: r.description || "" }));
     }
-      console.error(`[web-search] Brave search failed: ${response.status}`);
+    throw new Error(`Brave search failed: ${response.status}`);
   }
 
   const tavilyKey = process.env.TAVILY_API_KEY;
@@ -138,45 +138,41 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
       const data = (await response.json()) as TavilyResponse;
       return (data.results || []).map((r) => ({ title: r.title, url: r.url, content: r.content || "" }));
     }
-      console.error(`[web-search] Tavily search failed: ${response.status}`);
+    throw new Error(`Tavily search failed: ${response.status}`);
   }
 
   const perplexityKey = process.env.PERPLEXITY_API_KEY;
   if (perplexityKey) {
-    try {
-      const response = await fetch("https://api.perplexity.ai/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${perplexityKey}`,
-        },
-        body: JSON.stringify({
-          model: "sonar",
-          messages: [{
-            role: "user",
-            content: `Search web for: ${query}. Provide ${numResults} relevant results with titles, URLs, and brief descriptions. Format each result as: Title - URL - Description`,
-          }],
-        }),
-        signal,
+    const response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${perplexityKey}`,
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [{
+          role: "user",
+          content: `Search web for: ${query}. Provide ${numResults} relevant results with titles, URLs, and brief descriptions. Format each result as: Title - URL - Description`,
+        }],
+      }),
+      signal,
+    });
+    if (response.ok) {
+      const data = (await response.json()) as PerplexityResponse;
+      const content = data.choices?.[0]?.message?.content || "";
+      const urlRegex = /https?:\/\/[^\s\)>\]]+/g;
+      const lines = content.split("\n").filter(Boolean);
+      return lines.slice(0, numResults).map((line, i) => {
+        const urls = line.match(urlRegex) || [];
+        const url = urls[0] || "(no URL available)";
+        const parts = line.split(/ - /);
+        const title = parts[0]?.replace(urlRegex, "").trim() || `Result ${i + 1}`;
+        const desc = parts.slice(1).join(" - ").trim();
+        return { title, url, content: desc || line.slice(0, 200) };
       });
-      if (response.ok) {
-        const data = (await response.json()) as PerplexityResponse;
-        const content = data.choices?.[0]?.message?.content || "";
-        const urlRegex = /https?:\/\/[^\s\)>\]]+/g;
-        const lines = content.split("\n").filter(Boolean);
-        return lines.slice(0, numResults).map((line, i) => {
-          const urls = line.match(urlRegex) || [];
-          const url = urls[0] || "(no URL available)";
-          const parts = line.split(/ - /);
-          const title = parts[0]?.replace(urlRegex, "").trim() || `Result ${i + 1}`;
-          const desc = parts.slice(1).join(" - ").trim();
-          return { title, url, content: desc || line.slice(0, 200) };
-        });
-      }
-      console.error(`[web-search] Perplexity search failed: ${response.status}`);
-    } catch (err) {
-      console.error(`[web-search] Perplexity search failed:`, err);
     }
+    throw new Error(`Perplexity search failed: ${response.status}`);
   }
 
   throw new Error(

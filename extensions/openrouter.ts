@@ -149,6 +149,7 @@ export default async function (pi: ExtensionAPI) {
       contextWindow: m.contextWindow,
       maxTokens: m.maxTokens,
       compat: { supportsDeveloperRole: false, supportsReasoningEffort: meta.reasoning },
+      thinkingLevelMap: meta.thinkingLevelMap,
     };
   });
 
