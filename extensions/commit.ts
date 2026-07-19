@@ -6,6 +6,9 @@ const COMMIT_TYPES = ["FIX", "IMPROVE", "NEW"] as const;
 export default function (pi: ExtensionAPI) {
   let gitCommitUsed = false;
 
+  const removeCommitTool = () => {
+    pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "git_commit"));
+  };
   const containsBlockedGitCommand = (command: string): boolean => {
     const blockedCommands = /\bgit\s+(add|commit|push|pull|fetch|merge|rebase|reset|clean|stash|rm|restore|checkout(?:\s+-[Bb])?|init|clone)/;
     return blockedCommands.test(command);
@@ -45,24 +48,24 @@ export default function (pi: ExtensionAPI) {
       const status = await pi.exec("git", ["status", "--porcelain"], { signal });
       const hasStaged = status.stdout.split("\n").some((line) => line.trim());
       if (!hasStaged) {
-        pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "git_commit"));
+        removeCommitTool();
         return { content: [{ type: "text", text: "No staged files. Run /commit first." }], details: {} };
       }
 
       const result = await pi.exec("git", ["commit", "-m", fullMessage], { signal });
       if (result.code !== 0) {
-        pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "git_commit"));
+        removeCommitTool();
         return { content: [{ type: "text", text: `Commit failed: ${result.stderr}` }], details: {} };
       }
 
       gitCommitUsed = true;
-      pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "git_commit"));
+      removeCommitTool();
       return { content: [{ type: "text", text: `✓ Committed: ${fullMessage}` }], details: {} };
     },
   });
 
   pi.on("session_start", () => {
-    pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "git_commit"));
+    removeCommitTool();
   });
 
   pi.registerCommand("commit", {

@@ -31,19 +31,20 @@ function getMessages(): Record<string, string> {
 function setMessages(messages: Record<string, string>): void {
   writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2), "utf-8");
 }
+function messageCompletions(prefix: string): AutocompleteItem[] | null {
+  const messages = getMessages();
+  const items = Object.keys(messages).map((num) => ({
+    value: num,
+    label: `Message ${num}: ${messages[num].substring(0, 50)}${messages[num].length > 50 ? '...' : ''}`,
+  }));
+  const filtered = items.filter((i) => i.value.startsWith(prefix));
+  return filtered.length > 0 ? filtered : null;
+}
 
 export default function (pi: ExtensionAPI) {
   pi.registerCommand("msg", {
     description: "Send a predefined message by number",
-    getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
-      const messages = getMessages();
-      const items = Object.keys(messages).map((num) => ({
-        value: num,
-        label: `Message ${num}: ${messages[num].substring(0, 50)}${messages[num].length > 50 ? '...' : ''}`,
-      }));
-      const filtered = items.filter((i) => i.value.startsWith(prefix));
-      return filtered.length > 0 ? filtered : null;
-    },
+    getArgumentCompletions: messageCompletions,
     handler: async (args, ctx) => {
       if (!ctx.hasUI) {
         ctx.ui.notify("/msg requires interactive mode", "error");
@@ -65,15 +66,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.registerCommand("change-msg", {
     description: "Change or create a predefined message",
-    getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
-      const messages = getMessages();
-      const items = Object.keys(messages).map((num) => ({
-        value: num,
-        label: `Message ${num}: ${messages[num].substring(0, 50)}${messages[num].length > 50 ? '...' : ''}`,
-      }));
-      const filtered = items.filter((i) => i.value.startsWith(prefix));
-      return filtered.length > 0 ? filtered : null;
-    },
+    getArgumentCompletions: messageCompletions,
     handler: async (args, ctx) => {
       if (!ctx.hasUI) {
         ctx.ui.notify("/change-msg requires interactive mode", "error");
@@ -103,15 +96,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.registerCommand("show-msg", {
     description: "Display the contents of a predefined message",
-    getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
-      const messages = getMessages();
-      const items = Object.keys(messages).map((num) => ({
-        value: num,
-        label: `Message ${num}: ${messages[num].substring(0, 50)}${messages[num].length > 50 ? '...' : ''}`,
-      }));
-      const filtered = items.filter((i) => i.value.startsWith(prefix));
-      return filtered.length > 0 ? filtered : null;
-    },
+    getArgumentCompletions: messageCompletions,
     handler: async (args, ctx) => {
       if (!ctx.hasUI) {
         ctx.ui.notify("/show-msg requires interactive mode", "error");
