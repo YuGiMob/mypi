@@ -4,7 +4,6 @@ import { Type } from "typebox";
 const COMMIT_TYPES = ["FIX", "IMPROVE", "NEW"] as const;
 
 export default function (pi: ExtensionAPI) {
-  let gitCommitUsed = false;
   let gitBlocked = true;
 
   const removeCommitTool = () => {
@@ -35,9 +34,6 @@ export default function (pi: ExtensionAPI) {
       }),
     }),
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
-      if (gitCommitUsed) {
-        return { content: [{ type: "text", text: "Tool already used. Run /commit again to commit more changes." }], details: {} };
-      }
 
       const { type, message } = params;
       if (!COMMIT_TYPES.includes(type as typeof COMMIT_TYPES[number])) {
@@ -59,7 +55,6 @@ export default function (pi: ExtensionAPI) {
         return { content: [{ type: "text", text: `Commit failed: ${result.stderr}` }], details: {} };
       }
 
-      gitCommitUsed = true;
       removeCommitTool();
       return { content: [{ type: "text", text: `✓ Committed: ${fullMessage}` }], details: {} };
     },
@@ -99,7 +94,6 @@ export default function (pi: ExtensionAPI) {
 
       const diff = diffResult.stdout || "(no changes staged)";
 
-      gitCommitUsed = false;
       const activeTools = pi.getActiveTools();
       if (!activeTools.includes("git_commit")) {
         pi.setActiveTools([...activeTools, "git_commit"]);
@@ -125,7 +119,4 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  pi.on("session_shutdown", () => {
-    gitCommitUsed = false;
-  });
 }

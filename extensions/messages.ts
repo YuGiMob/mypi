@@ -101,7 +101,14 @@ export default function (pi: ExtensionAPI) {
       }
       const num = args.trim();
       if (!num) {
-        ctx.ui.notify("Usage: /show-msg <number>", "warning");
+        const messages = getMessages();
+        const keys = Object.keys(messages);
+        if (keys.length === 0) {
+          ctx.ui.notify("No messages defined.", "info");
+          return;
+        }
+        const list = keys.map((k) => `  ${k}: ${messages[k].substring(0, 60)}${messages[k].length > 60 ? "..." : ""}`).join("\n");
+        ctx.ui.notify(`Messages:\n${list}`, "info");
         return;
       }
       const message = getMessages()[num];

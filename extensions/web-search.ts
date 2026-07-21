@@ -14,36 +14,6 @@ interface SearchResult {
   content: string;
 }
 
-interface ExaResult {
-  title: string;
-  url: string;
-  content?: { text?: string };
-}
-interface ExaResponse {
-  results: ExaResult[];
-}
-
-interface BraveResult {
-  title: string;
-  url: string;
-  description?: string;
-}
-interface BraveResponse {
-  web?: { results?: BraveResult[] };
-}
-
-interface TavilyResult {
-  title: string;
-  url: string;
-  content?: string;
-}
-interface TavilyResponse {
-  results?: TavilyResult[];
-}
-
-interface PerplexityResponse {
-  choices?: { message?: { content?: string } }[];
-}
 
 export default function webSearchExtension(pi: ExtensionAPI) {
 
@@ -85,59 +55,60 @@ export default function webSearchExtension(pi: ExtensionAPI) {
 
 }
 
-async function webSearch(query: string, numResults: number, signal: AbortSignal): Promise<SearchResult[]> {
-  const errors: string[] = [];
+interface SearchProvider {
+  name: string;
+  envVar: string;
+  execute(query: string, numResults: number, signal: AbortSignal): Promise<SearchResult[]>;
+}
 
-  const exaKey = process.env.EXA_API_KEY;
-  if (exaKey) {
-    try {
+const SEARCH_PROVIDERS: SearchProvider[] = [
+  {
+    name: "Exa",
+    envVar: "EXA_API_KEY",
+    async execute(query, numResults, signal) {
       const response = await fetch("https://api.exa.ai/search", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${exaKey}`,
+          "Authorization": `Bearer ${process.env.EXA_API_KEY}`,
         },
         body: JSON.stringify({ query, numResults, contents: true }),
         signal,
       });
-      if (response.ok) {
-        const data = (await response.json()) as ExaResponse;
-        return data.results.map((r) => ({ title: r.title, url: r.url, content: r.content?.text || "" }));
-      }
-      errors.push(`Exa: ${response.status}`);
-    } catch (err) {
-      errors.push(`Exa: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
-  }
-
-  const braveKey = process.env.BRAVE_SEARCH_API_KEY;
-  if (braveKey) {
-    try {
+      if (!response.ok) throw new Error(`${response.status}`);
+      const data = (await response.json()) as {
+        results: Array<{ title: string; url: string; content?: { text?: string } }>;
+      };
+      return data.results.map((r) => ({ title: r.title, url: r.url, content: r.content?.text || "" }));
+    },
+  },
+  {
+    name: "Brave",
+    envVar: "BRAVE_SEARCH_API_KEY",
+    async execute(query, numResults, signal) {
       const url = new URL("https://api.search.brave.com/res/v1/web/search");
       url.searchParams.set("q", query);
       url.searchParams.set("count", String(numResults));
       const response = await fetch(url.toString(), {
         signal,
-        headers: { "X-Subscription-Token": braveKey, "Accept": "application/json" },
+        headers: { "X-Subscription-Token": process.env.BRAVE_SEARCH_API_KEY!, "Accept": "application/json" },
       });
-      if (response.ok) {
-        const data = (await response.json()) as BraveResponse;
-        return (data.web?.results || []).map((r) => ({ title: r.title, url: r.url, content: r.description || "" }));
-      }
-      errors.push(`Brave: ${response.status}`);
-    } catch (err) {
-      errors.push(`Brave: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
-  }
-
-  const tavilyKey = process.env.TAVILY_API_KEY;
-  if (tavilyKey) {
-    try {
+      if (!response.ok) throw new Error(`${response.status}`);
+      const data = (await response.json()) as {
+        web?: { results?: Array<{ title: string; url: string; description?: string }> };
+      };
+      return (data.web?.results || []).map((r) => ({ title: r.title, url: r.url, content: r.description || "" }));
+    },
+  },
+  {
+    name: "Tavily",
+    envVar: "TAVILY_API_KEY",
+    async execute(query, numResults, signal) {
       const response = await fetch("https://api.tavily.com/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          api_key: tavilyKey,
+          api_key: process.env.TAVILY_API_KEY,
           query,
           max_results: numResults,
           include_answer: false,
@@ -145,24 +116,22 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
         }),
         signal,
       });
-      if (response.ok) {
-        const data = (await response.json()) as TavilyResponse;
-        return (data.results || []).map((r) => ({ title: r.title, url: r.url, content: r.content || "" }));
-      }
-      errors.push(`Tavily: ${response.status}`);
-    } catch (err) {
-      errors.push(`Tavily: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
-  }
-
-  const perplexityKey = process.env.PERPLEXITY_API_KEY;
-  if (perplexityKey) {
-    try {
+      if (!response.ok) throw new Error(`${response.status}`);
+      const data = (await response.json()) as {
+        results?: Array<{ title: string; url: string; content?: string }>;
+      };
+      return (data.results || []).map((r) => ({ title: r.title, url: r.url, content: r.content || "" }));
+    },
+  },
+  {
+    name: "Perplexity",
+    envVar: "PERPLEXITY_API_KEY",
+    async execute(query, numResults, signal) {
       const response = await fetch("https://api.perplexity.ai/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${perplexityKey}`,
+          "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
         },
         body: JSON.stringify({
           model: "sonar",
@@ -173,23 +142,35 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
         }),
         signal,
       });
-      if (response.ok) {
-        const data = (await response.json()) as PerplexityResponse;
-        const content = data.choices?.[0]?.message?.content || "";
-        const urlRegex = /https?:\/\/[^\s\)>\]]+/g;
-        const lines = content.split("\n").filter(Boolean);
-        return lines.slice(0, numResults).map((line, i) => {
-          const urls = line.match(urlRegex) || [];
-          const url = urls[0] || "(no URL available)";
-          const parts = line.split(/ - /);
-          const title = parts[0]?.replace(urlRegex, "").trim() || `Result ${i + 1}`;
-          const desc = parts.slice(1).join(" - ").trim();
-          return { title, url, content: desc || line.slice(0, 200) };
-        });
-      }
-      errors.push(`Perplexity: ${response.status}`);
+      if (!response.ok) throw new Error(`${response.status}`);
+      const data = (await response.json()) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      const content = data.choices?.[0]?.message?.content || "";
+      const urlRegex = /https?:\/\/[^\s\)>\]]+/g;
+      const lines = content.split("\n").filter(Boolean);
+      return lines.slice(0, numResults).map((line, i) => {
+        const urls = line.match(urlRegex) || [];
+        const url = urls[0] || "(no URL available)";
+        const parts = line.split(/ - /);
+        const title = parts[0]?.replace(urlRegex, "").trim() || `Result ${i + 1}`;
+        const desc = parts.slice(1).join(" - ").trim();
+        return { title, url, content: desc || line.slice(0, 200) };
+      });
+    },
+  },
+];
+
+async function webSearch(query: string, numResults: number, signal: AbortSignal): Promise<SearchResult[]> {
+  const errors: string[] = [];
+
+  for (const provider of SEARCH_PROVIDERS) {
+    if (!process.env[provider.envVar]) continue;
+
+    try {
+      return await provider.execute(query, numResults, signal);
     } catch (err) {
-      errors.push(`Perplexity: ${err instanceof Error ? err.message : "Unknown error"}`);
+      errors.push(`${provider.name}: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   }
 
