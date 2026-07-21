@@ -35,7 +35,7 @@ export function buildModels(
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: m.contextWindow,
       maxTokens: m.maxTokens,
-      compat: { supportsDeveloperRole: false, supportsReasoningEffort: meta.reasoning },
+      compat: { supportsDeveloperRole: meta.developerRole ?? false, supportsReasoningEffort: meta.reasoning },
       thinkingLevelMap: meta.thinkingLevelMap,
     };
   });

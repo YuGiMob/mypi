@@ -74,6 +74,15 @@ export default async function (pi: ExtensionAPI) {
 
   const HARDCODED_MODELS: ApiModel[] = [
     { id: "glm/glm-5.2", contextWindow: 976_000, maxTokens: 131_072 },
+    { id: "glm/glm-5.1", contextWindow: 198_000, maxTokens: 131_072 },
+    { id: "glm/glm-5", contextWindow: 198_000, maxTokens: 131_072 },
+    { id: "glm/glm-4.7", contextWindow: 198_000, maxTokens: 8192 },
+    { id: "bbl/gpt-5.5-mini", contextWindow: 128_000, maxTokens: 8192 },
+    { id: "bbl/gpt-5.4-mini", contextWindow: 128_000, maxTokens: 8192 },
+    { id: "bbl/gemini-3.5-flash", contextWindow: 128_000, maxTokens: 8192 },
+    { id: "bbl/gemini-2.5-flash", contextWindow: 128_000, maxTokens: 8192 },
+    { id: "agr/deepseek-v4-pro", contextWindow: 128_000, maxTokens: 32768 },
+    { id: "agr/glm-5.1", contextWindow: 198_000, maxTokens: 131_072 },
   ];
 
   let apiModels: ApiModel[] = [];
@@ -90,7 +99,7 @@ export default async function (pi: ExtensionAPI) {
         }>;
       };
       apiModels = data.data
-        .filter((m) => m.supports_chat && !m.supports_audio)
+        .filter((m) => m.supports_chat)
         .map((m) => ({
           id: m.id,
           contextWindow: m.context_window ?? 128_000,

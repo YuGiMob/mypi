@@ -10,8 +10,35 @@ export default function (pi: ExtensionAPI) {
     pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "git_commit"));
   };
   const containsBlockedGitCommand = (command: string): boolean => {
-    const blockedCommands = /\bgit\s+(add|commit|push|pull|fetch|merge|rebase|reset|clean|stash|rm|restore|checkout|switch|cherry-pick|revert|mv|init|clone|branch|tag|submodule|worktree)/;
-    return blockedCommands.test(command);
+    const alwaysBlocked = /\bgit\s+(add|commit|push|pull|merge|rebase|reset|clean|rm|restore|switch|cherry-pick|revert|mv|init|clone)\b/;
+    if (alwaysBlocked.test(command)) return true;
+
+    if (/\bgit\s+fetch\b/.test(command)) return false;
+
+    if (/\bgit\s+stash\s+(list|show)\b/.test(command)) return false;
+
+    if (/\bgit\s+branch\b/.test(command)) {
+      if (/\bgit\s+branch\s+(-d|-D|-m|-M|--delete|--move)\b/.test(command)) return true;
+      return false;
+    }
+
+    if (/\bgit\s+tag\b/.test(command)) {
+      if (/\bgit\s+tag\s+(-d|-a|-s|-f|--delete|--annotate|--sign|--force)\b/.test(command)) return true;
+      return false;
+    }
+
+    if (/\bgit\s+checkout\s+--\b/.test(command)) return false;
+    if (/\bgit\s+checkout\b/.test(command)) return true;
+
+    if (/\bgit\s+submodule\s+(status|init|summary)\b/.test(command)) return false;
+    if (/\bgit\s+submodule\b/.test(command)) return true;
+
+    if (/\bgit\s+worktree\s+list\b/.test(command)) return false;
+    if (/\bgit\s+worktree\b/.test(command)) return true;
+
+    if (/\bgit\s+stash\b/.test(command)) return true;
+
+    return false;
   };
 
   pi.on("tool_call", async (event) => {
@@ -43,7 +70,7 @@ export default function (pi: ExtensionAPI) {
       const fullMessage = `${type}: ${message}`;
 
       const status = await pi.exec("git", ["status", "--porcelain"], { signal });
-      const hasStaged = status.stdout.split("\n").some((line) => line.trim());
+      const hasStaged = status.stdout.split("\n").some((line) => line.length > 0 && line[0] !== ' ' && line[0] !== '?');
       if (!hasStaged) {
         removeCommitTool();
         return { content: [{ type: "text", text: "No staged files. Run /commit first." }], details: {} };

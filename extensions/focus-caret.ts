@@ -59,6 +59,7 @@ export default function (pi: ExtensionAPI) {
 }
 
 class FocusAwareEditor extends CustomEditor {
+  focused = true;
   override handleInput(data: string): void {
     super.handleInput(data);
 

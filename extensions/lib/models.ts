@@ -5,6 +5,7 @@ export interface ModelMeta {
   vision: boolean;
   thinkingFormat?: string;
   thinkingLevelMap?: { [key: string]: string };
+  developerRole?: boolean;
 }
 
 export const DEFAULT_META: ModelMeta = {

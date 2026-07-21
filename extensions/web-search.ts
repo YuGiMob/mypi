@@ -32,7 +32,7 @@ export default function webSearchExtension(pi: ExtensionAPI) {
       onUpdate?.({ content: [{ type: "text", text: `Searching for "${query}"...` }] });
 
       try {
-        const results = await webSearch(query, numResults, signal);
+        const { results, provider } = await webSearch(query, numResults, signal);
         const formattedResults = results
           .map((r, i) => {
             const content = r.content.slice(0, 200);
@@ -41,8 +41,8 @@ export default function webSearchExtension(pi: ExtensionAPI) {
           .join("\n\n");
 
         return {
-          content: [{ type: "text", text: `Search results for "${query}":\n\n${formattedResults}` }],
-          details: { query, numResults },
+          content: [{ type: "text", text: `Search results from ${provider} for "${query}":\n\n${formattedResults}` }],
+          details: { query, numResults, provider },
         };
       } catch (error) {
         return {
@@ -72,7 +72,7 @@ const SEARCH_PROVIDERS: SearchProvider[] = [
           "Content-Type": "application/json",
           "Authorization": `Bearer ${process.env.EXA_API_KEY}`,
         },
-        body: JSON.stringify({ query, numResults, contents: true }),
+        body: JSON.stringify({ query, numResults, contents: false }),
         signal,
       });
       if (!response.ok) throw new Error(`${response.status}`);
@@ -161,14 +161,16 @@ const SEARCH_PROVIDERS: SearchProvider[] = [
   },
 ];
 
-async function webSearch(query: string, numResults: number, signal: AbortSignal): Promise<SearchResult[]> {
+async function webSearch(query: string, numResults: number, signal: AbortSignal): Promise<{ results: SearchResult[]; provider: string }> {
   const errors: string[] = [];
 
   for (const provider of SEARCH_PROVIDERS) {
     if (!process.env[provider.envVar]) continue;
 
     try {
-      return await provider.execute(query, numResults, signal);
+      const timeoutSignal = withTimeout(signal, 15000);
+      const results = await provider.execute(query, numResults, timeoutSignal);
+      return { results, provider: provider.name };
     } catch (err) {
       errors.push(`${provider.name}: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
@@ -180,4 +182,14 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
   throw new Error(
     "No search API configured. Set one of: EXA_API_KEY, TAVILY_API_KEY, BRAVE_SEARCH_API_KEY, or PERPLEXITY_API_KEY"
   );
+}
+
+function withTimeout(signal: AbortSignal, ms: number): AbortSignal {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  signal.addEventListener("abort", () => {
+    clearTimeout(timer);
+    controller.abort();
+  });
+  return controller.signal;
 }

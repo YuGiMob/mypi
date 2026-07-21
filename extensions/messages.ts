@@ -28,14 +28,14 @@ function getMessages(): Record<string, string> {
 function setMessages(messages: Record<string, string>): void {
   writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2), "utf-8");
 }
-function messageCompletions(prefix: string): AutocompleteItem[] | null {
+function messageCompletions(prefix: string): AutocompleteItem[] {
   const messages = getMessages();
   const items = Object.keys(messages).map((num) => ({
     value: num,
     label: `Message ${num}: ${messages[num].substring(0, 50)}${messages[num].length > 50 ? '...' : ''}`,
   }));
   const filtered = items.filter((i) => i.value.startsWith(prefix));
-  return filtered.length > 0 ? filtered : null;
+  return filtered.length > 0 ? filtered : [];
 }
 
 export default function (pi: ExtensionAPI) {
@@ -58,6 +58,7 @@ export default function (pi: ExtensionAPI) {
         return;
       }
       pi.sendUserMessage(message, { deliverAs: "followUp" });
+      ctx.ui.notify(`Message ${num} sent`, "info");
     },
   });
 
@@ -107,7 +108,7 @@ export default function (pi: ExtensionAPI) {
           ctx.ui.notify("No messages defined.", "info");
           return;
         }
-        const list = keys.map((k) => `  ${k}: ${messages[k].substring(0, 60)}${messages[k].length > 60 ? "..." : ""}`).join("\n");
+        const list = keys.map((k) => `  ${k}: ${messages[k].substring(0, 200)}${messages[k].length > 200 ? "..." : ""}`).join("\n");
         ctx.ui.notify(`Messages:\n${list}`, "info");
         return;
       }

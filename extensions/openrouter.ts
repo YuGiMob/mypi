@@ -6,25 +6,25 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "openai/gpt-4.1":              { reasoning: false, vision: false },
   "openai/gpt-4.1-mini":         { reasoning: false, vision: false },
   "openai/gpt-4.1-nano":         { reasoning: false, vision: false },
-  "openai/gpt-4o":               { reasoning: false, vision: true  },
-  "openai/gpt-4o-mini":          { reasoning: false, vision: true  },
+  "openai/gpt-4o":               { reasoning: false, vision: true,  developerRole: true },
+  "openai/gpt-4o-mini":          { reasoning: false, vision: true,  developerRole: true },
   "openai/gpt-5-mini":           { reasoning: false, vision: false },
   "openai/gpt-5.4-mini":         { reasoning: false, vision: false },
   "openai/gpt-5.5-mini":         { reasoning: false, vision: false },
-  "openai/o1":                   { reasoning: true,  vision: false },
-  "openai/o1-mini":              { reasoning: true,  vision: false },
-  "openai/o3":                   { reasoning: true,  vision: false },
-  "openai/o3-mini":              { reasoning: true,  vision: false },
-  "openai/o4-mini":              { reasoning: true,  vision: false },
+  "openai/o1":                   { reasoning: true,  vision: false, developerRole: true },
+  "openai/o1-mini":              { reasoning: true,  vision: false, developerRole: true },
+  "openai/o3":                   { reasoning: true,  vision: false, developerRole: true },
+  "openai/o3-mini":              { reasoning: true,  vision: false, developerRole: true },
+  "openai/o4-mini":              { reasoning: true,  vision: false, developerRole: true },
 
   // Anthropic
-  "anthropic/claude-3.5-haiku":  { reasoning: false, vision: true  },
-  "anthropic/claude-3.5-sonnet": { reasoning: false, vision: true  },
-  "anthropic/claude-3-opus":     { reasoning: false, vision: true  },
-  "anthropic/claude-3-haiku":    { reasoning: false, vision: true  },
-  "anthropic/claude-4-sonnet":   { reasoning: false, vision: true  },
-  "anthropic/claude-4-haiku":    { reasoning: false, vision: true  },
-  "anthropic/claude-4-opus":     { reasoning: false, vision: true  },
+  "anthropic/claude-3.5-haiku":  { reasoning: false, vision: true,  developerRole: true },
+  "anthropic/claude-3.5-sonnet": { reasoning: false, vision: true,  developerRole: true },
+  "anthropic/claude-3-opus":     { reasoning: false, vision: true,  developerRole: true },
+  "anthropic/claude-3-haiku":    { reasoning: false, vision: true,  developerRole: true },
+  "anthropic/claude-4-sonnet":   { reasoning: false, vision: true,  developerRole: true },
+  "anthropic/claude-4-haiku":    { reasoning: false, vision: true,  developerRole: true },
+  "anthropic/claude-4-opus":     { reasoning: false, vision: true,  developerRole: true },
 
   // Google
   "google/gemini-2.5-flash":     { reasoning: false, vision: true  },
@@ -99,6 +99,18 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
 export default async function (pi: ExtensionAPI) {
   const baseUrl = "https://openrouter.ai/api/v1";
 
+  const HARDCODED_MODELS: ApiModel[] = [
+    { id: "openai/gpt-4o", contextWindow: 128_000, maxTokens: 16384 },
+    { id: "openai/o3-mini", contextWindow: 200_000, maxTokens: 100_000 },
+    { id: "anthropic/claude-4-sonnet", contextWindow: 200_000, maxTokens: 8192 },
+    { id: "anthropic/claude-3.5-haiku", contextWindow: 200_000, maxTokens: 8192 },
+    { id: "google/gemini-2.5-flash", contextWindow: 1_000_000, maxTokens: 8192 },
+    { id: "deepseek/deepseek-v4-flash", contextWindow: 1_048_576, maxTokens: 65536 },
+    { id: "meta-llama/llama-4-maverick", contextWindow: 1_000_000, maxTokens: 8192 },
+    { id: "mistralai/mistral-large", contextWindow: 128_000, maxTokens: 16384 },
+    { id: "qwen/qwen-3.5-397b", contextWindow: 256_000, maxTokens: 16384 },
+    { id: "xai/grok-3-fast", contextWindow: 131_072, maxTokens: 8192 },
+  ];
   let apiModels: ApiModel[] = [];
   try {
     const resp = await fetch(`${baseUrl}/models`);
@@ -128,8 +140,16 @@ export default async function (pi: ExtensionAPI) {
   }
 
   if (apiModels.length === 0) {
-    console.error("[openrouter] Could not discover any models. Check your network connection.");
-    return;
+    console.warn("[openrouter] Could not discover any models from API, using hardcoded fallbacks.");
+    apiModels = [...HARDCODED_MODELS];
+  } else {
+    const seen = new Set(apiModels.map((m) => m.id));
+    for (const hc of HARDCODED_MODELS) {
+      if (!seen.has(hc.id)) {
+        apiModels.push(hc);
+        seen.add(hc.id);
+      }
+    }
   }
 
   const models = buildModels(apiModels, KNOWN_MODELS);
