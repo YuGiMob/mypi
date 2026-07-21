@@ -68,22 +68,22 @@ export default function (pi: ExtensionAPI) {
       }
 
       const fullMessage = `${type}: ${message}`;
+      try {
+        const status = await pi.exec("git", ["status", "--porcelain"], { signal });
+        const hasStaged = status.stdout.split("\n").some((line) => line.length > 0 && line[0] !== ' ' && line[0] !== '?');
+        if (!hasStaged) {
+          return { content: [{ type: "text", text: "No staged files. Run /commit first." }], details: {} };
+        }
 
-      const status = await pi.exec("git", ["status", "--porcelain"], { signal });
-      const hasStaged = status.stdout.split("\n").some((line) => line.length > 0 && line[0] !== ' ' && line[0] !== '?');
-      if (!hasStaged) {
+        const result = await pi.exec("git", ["commit", "-m", fullMessage], { signal });
+        if (result.code !== 0) {
+          return { content: [{ type: "text", text: `Commit failed: ${result.stderr}` }], details: {} };
+        }
+
+        return { content: [{ type: "text", text: `✓ Committed: ${fullMessage}` }], details: {} };
+      } finally {
         removeCommitTool();
-        return { content: [{ type: "text", text: "No staged files. Run /commit first." }], details: {} };
       }
-
-      const result = await pi.exec("git", ["commit", "-m", fullMessage], { signal });
-      if (result.code !== 0) {
-        removeCommitTool();
-        return { content: [{ type: "text", text: `Commit failed: ${result.stderr}` }], details: {} };
-      }
-
-      removeCommitTool();
-      return { content: [{ type: "text", text: `✓ Committed: ${fullMessage}` }], details: {} };
     },
   });
 

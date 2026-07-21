@@ -8,10 +8,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const MESSAGES_FILE = join(__dirname, "messages.json");
 
-const DEFAULT_MESSAGES: Record<string, string> = {
-  "1": "Analyze the codebase of the project in this folder to be able to understand it's architecture, code patterns and standards, so that you are better able to handle the upcoming tasks"
-};
-
 function getMessages(): Record<string, string> {
   if (existsSync(MESSAGES_FILE)) {
     try {
@@ -19,10 +15,10 @@ function getMessages(): Record<string, string> {
       return JSON.parse(content);
     } catch (err) {
       console.error("Failed to read messages:", err);
-      return { ...DEFAULT_MESSAGES };
+      return {};
     }
   }
-  return { ...DEFAULT_MESSAGES };
+  return {};
 }
 
 function setMessages(messages: Record<string, string>): void {

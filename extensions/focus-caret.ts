@@ -59,7 +59,6 @@ export default function (pi: ExtensionAPI) {
 }
 
 class FocusAwareEditor extends CustomEditor {
-  focused = true;
   override handleInput(data: string): void {
     super.handleInput(data);
 
@@ -71,11 +70,9 @@ class FocusAwareEditor extends CustomEditor {
 
     const isTypingCommand = textBeforeCursor.trimStart().startsWith("/");
     if (isTypingCommand) {
-      this.focused = false;
       shouldHideCaret = true;
       updateCursor();
     } else if (shouldHideCaret) {
-      this.focused = true;
       shouldHideCaret = false;
       updateCursor();
     }

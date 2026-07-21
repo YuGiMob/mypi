@@ -1,12 +1,11 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { Type, Static } from "typebox";
+import { Type } from "typebox";
 
 const WebSearchParams = Type.Object({
   query: Type.String({ description: "Search query" }),
   numResults: Type.Optional(Type.Number({ description: "Number of results (default: 5)", default: 5 })),
 });
 
-export type WebSearchParamsType = Static<typeof WebSearchParams>;
 
 interface SearchResult {
   title: string;
@@ -190,6 +189,6 @@ function withTimeout(signal: AbortSignal, ms: number): AbortSignal {
   signal.addEventListener("abort", () => {
     clearTimeout(timer);
     controller.abort();
-  });
+  }, { once: true });
   return controller.signal;
 }
