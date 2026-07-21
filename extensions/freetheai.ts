@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { type ModelMeta, DEFAULT_META } from "./lib/models.js";
-
+import { type ModelMeta } from "./lib/models.js";
+import { buildModels, registerProvider, type ApiModel } from "./lib/provider.js";
 
 const KNOWN_MODELS: Record<string, ModelMeta> = {
   "agr/deepseek-v4-pro": { reasoning: true,  vision: false },
@@ -72,11 +72,11 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
 export default async function (pi: ExtensionAPI) {
   const baseUrl = "https://api.freetheai.xyz/v1";
 
-  const HARDCODED_MODELS: Array<{ id: string; contextWindow: number; maxTokens: number }> = [
+  const HARDCODED_MODELS: ApiModel[] = [
     { id: "glm/glm-5.2", contextWindow: 976_000, maxTokens: 131_072 },
   ];
 
-  let apiModels: Array<{ id: string; contextWindow: number; maxTokens: number }> = [];
+  let apiModels: ApiModel[] = [];
   try {
     const resp = await fetch("https://freetheai.xyz/models.json");
     if (resp.ok) {
@@ -130,26 +130,11 @@ export default async function (pi: ExtensionAPI) {
     }
   }
 
-  const models = apiModels.map((m) => {
-    const meta = KNOWN_MODELS[m.id] ?? DEFAULT_META;
-    return {
-      id: m.id,
-      name: m.id,
-      reasoning: meta.reasoning,
-      input: (meta.vision ? ["text", "image"] : ["text"]) as ("text" | "image")[],
-      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-      contextWindow: m.contextWindow,
-      maxTokens: m.maxTokens,
-      compat: { supportsDeveloperRole: false, supportsReasoningEffort: meta.reasoning },
-      thinkingLevelMap: meta.thinkingLevelMap,
-    };
-  });
-
-  pi.registerProvider("freetheai", {
+  const models = buildModels(apiModels, KNOWN_MODELS);
+  registerProvider(pi, "freetheai", {
     name: "FreeTheAI",
     baseUrl,
     apiKey: "$FREETHEAI_API_KEY",
-    api: "openai-completions",
     models,
   });
 }

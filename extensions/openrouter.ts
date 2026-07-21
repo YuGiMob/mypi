@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { type ModelMeta, DEFAULT_META } from "./lib/models.js";
-
+import { type ModelMeta } from "./lib/models.js";
+import { buildModels, registerProvider, type ApiModel } from "./lib/provider.js";
 const KNOWN_MODELS: Record<string, ModelMeta> = {
   // OpenAI
   "openai/gpt-4.1":              { reasoning: false, vision: false },
@@ -99,9 +99,7 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
 export default async function (pi: ExtensionAPI) {
   const baseUrl = "https://openrouter.ai/api/v1";
 
-  let apiModels: Array<{ id: string; contextWindow: number; maxTokens: number }> = [];
-
-  // Fetch models from OpenRouter API
+  let apiModels: ApiModel[] = [];
   try {
     const resp = await fetch(`${baseUrl}/models`);
     if (resp.ok) {
@@ -109,10 +107,6 @@ export default async function (pi: ExtensionAPI) {
         data: Array<{
           id: string;
           context_length?: number;
-          architecture?: {
-            modality?: string;
-            input_modalities?: string[];
-          };
           top_provider?: {
             max_completion_tokens?: number | null;
           };
@@ -138,26 +132,11 @@ export default async function (pi: ExtensionAPI) {
     return;
   }
 
-  const models = apiModels.map((m) => {
-    const meta = KNOWN_MODELS[m.id] ?? DEFAULT_META;
-    return {
-      id: m.id,
-      name: m.id,
-      reasoning: meta.reasoning,
-      input: (meta.vision ? ["text", "image"] : ["text"]) as ("text" | "image")[],
-      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-      contextWindow: m.contextWindow,
-      maxTokens: m.maxTokens,
-      compat: { supportsDeveloperRole: false, supportsReasoningEffort: meta.reasoning },
-      thinkingLevelMap: meta.thinkingLevelMap,
-    };
-  });
-
-  pi.registerProvider("openrouter", {
+  const models = buildModels(apiModels, KNOWN_MODELS);
+  registerProvider(pi, "openrouter", {
     name: "OpenRouter",
     baseUrl,
     apiKey: "$OPENROUTER_API_KEY",
-    api: "openai-completions",
     models,
   });
 }

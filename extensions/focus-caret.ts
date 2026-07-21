@@ -60,18 +60,6 @@ export default function (pi: ExtensionAPI) {
 
 class FocusAwareEditor extends CustomEditor {
   override handleInput(data: string): void {
-    if (data === "\x1b[O") {
-      hasFocus = false;
-      this.focused = false;
-      updateCursor();
-      return;
-    } else if (data === "\x1b[I") {
-      hasFocus = true;
-      this.focused = true;
-      updateCursor();
-      return;
-    }
-
     super.handleInput(data);
 
     const textAfter = this.getText();

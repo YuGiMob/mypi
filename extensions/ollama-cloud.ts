@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { type ModelMeta, DEFAULT_META } from "./lib/models.js";
-
+import { buildModels, registerProvider, type ApiModel } from "./lib/provider.js";
 
 const KNOWN_MODELS: Record<string, ModelMeta> = {
   "gemma3:4b":         { contextWindow: 128_000, maxTokens: 8192,  reasoning: false, vision: true  },
@@ -87,27 +87,21 @@ export default async function (pi: ExtensionAPI) {
     return;
   }
 
-  const models = modelIds.map((id) => {
+  const apiModels: ApiModel[] = modelIds.map((id) => {
     const bareId = id.replace(/:cloud$/, "");
     const meta = KNOWN_MODELS[id] ?? KNOWN_MODELS[bareId] ?? DEFAULT_META;
     return {
       id,
-      name: id,
-      reasoning: meta.reasoning,
-      input: (meta.vision ? ["text", "image"] : ["text"]) as ("text" | "image")[],
-      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: meta.contextWindow,
       maxTokens: meta.maxTokens,
-      compat: { supportsDeveloperRole: false, supportsReasoningEffort: meta.reasoning },
-      thinkingLevelMap: meta.thinkingLevelMap,
     };
   });
 
-  pi.registerProvider("ollama-cloud", {
+  const models = buildModels(apiModels, KNOWN_MODELS, (id) => id.replace(/:cloud$/, ""));
+  registerProvider(pi, "ollama-cloud", {
     name: "Ollama Cloud",
     baseUrl,
     apiKey: "$OLLAMA_API_KEY",
-    api: "openai-completions",
     models,
   });
 }
