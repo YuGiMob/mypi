@@ -100,6 +100,9 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
+      await ctx.ui.setWorkingMessage("Waiting for queued messages to complete...");
+      await ctx.waitForIdle();
+
       await ctx.ui.setWorkingMessage("Staging files...");
       const addResult = await pi.exec("git", ["add", "."]);
       if (addResult.code !== 0) {
