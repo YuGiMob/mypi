@@ -122,42 +122,6 @@ const SEARCH_PROVIDERS: SearchProvider[] = [
       return (data.results || []).map((r) => ({ title: r.title, url: r.url, content: r.content || "" }));
     },
   },
-  {
-    name: "Perplexity",
-    envVar: "PERPLEXITY_API_KEY",
-    async execute(query, numResults, signal) {
-      const response = await fetch("https://api.perplexity.ai/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "sonar",
-          messages: [{
-            role: "user",
-            content: `Search web for: ${query}. Provide ${numResults} relevant results with titles, URLs, and brief descriptions. Format each result as: Title - URL - Description`,
-          }],
-        }),
-        signal,
-      });
-      if (!response.ok) throw new Error(`${response.status}`);
-      const data = (await response.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      const content = data.choices?.[0]?.message?.content || "";
-      const urlRegex = /https?:\/\/[^\s\)>\]]+/g;
-      const lines = content.split("\n").filter(Boolean);
-      return lines.slice(0, numResults).map((line, i) => {
-        const urls = line.match(urlRegex) || [];
-        const url = urls[0] || "(no URL available)";
-        const parts = line.split(/ - /);
-        const title = parts[0]?.replace(urlRegex, "").trim() || `Result ${i + 1}`;
-        const desc = parts.slice(1).join(" - ").trim();
-        return { title, url, content: desc || line.slice(0, 200) };
-      });
-    },
-  },
 ];
 
 async function webSearch(query: string, numResults: number, signal: AbortSignal): Promise<{ results: SearchResult[]; provider: string }> {
@@ -179,7 +143,7 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
     throw new Error(`All search backends failed: ${errors.join("; ")}`);
   }
   throw new Error(
-    "No search API configured. Set one of: EXA_API_KEY, TAVILY_API_KEY, BRAVE_SEARCH_API_KEY, or PERPLEXITY_API_KEY"
+    "No search API configured. Set one of: EXA_API_KEY, TAVILY_API_KEY, or BRAVE_SEARCH_API_KEY",
   );
 }
 
