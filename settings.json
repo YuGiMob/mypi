@@ -1,11 +1,11 @@
 {
   "lastChangelogVersion": "0.82.1",
   "defaultModel": "deepseek-v4-flash",
-  "defaultProvider": "opencode-go",
+  "defaultProvider": "ollama-cloud",
   "packages": [
     "npm:pi-hashline-edit-pro"
   ],
-  "defaultThinkingLevel": "max",
+  "defaultThinkingLevel": "xhigh",
   "defaultProjectTrust": "always",
   "enableInstallTelemetry": false,
   "compaction": {
