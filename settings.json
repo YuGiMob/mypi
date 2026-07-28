@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.81.1",
+  "lastChangelogVersion": "0.82.1",
   "defaultModel": "deepseek-v4-flash",
   "defaultProvider": "opencode-go",
   "packages": [
