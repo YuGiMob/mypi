@@ -24,7 +24,7 @@ export default function (pi: ExtensionAPI) {
       return false;
     }
 
-    if (/\bgit\s+checkout\s+--\b/.test(command)) return false;
+    if (/\bgit\s+checkout\s+--\s/.test(command)) return false;
     if (/\bgit\s+checkout\b/.test(command)) return true;
 
     if (/\bgit\s+submodule\s+(status|init|summary)\b/.test(command)) return false;

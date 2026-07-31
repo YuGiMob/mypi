@@ -1,6 +1,6 @@
 import type { SessionContext } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
-import { buildTotalContextText, formatMessageForDisplay } from "./index";
+import { buildNumberedLines, buildToolsText, buildTokenBreakdown, buildTotalContextText, formatMessageForDisplay } from "./index";
 import { type ContextTokenBreakdown, StatsTabContent } from "./stats-tab-content";
 import { formatTokens } from "./utils";
 
@@ -48,8 +48,6 @@ const context = {
 	model: { provider: "anthropic", modelId: "claude-sonnet-4" },
 } satisfies SessionContext;
 
-// ── formatTokens ──────────────────────────────────────────────────────────────
-
 describe("formatTokens", () => {
 	it("formats token counts with k/M suffixes", () => {
 		expect(formatTokens(500)).toBe("500");
@@ -60,8 +58,6 @@ describe("formatTokens", () => {
 		expect(formatTokens(undefined)).toBe("N/A");
 	});
 });
-
-// ── StatsTabContent ───────────────────────────────────────────────────────────
 
 describe("StatsTabContent", () => {
 	const breakdown: ContextTokenBreakdown = {
@@ -124,8 +120,6 @@ describe("StatsTabContent", () => {
 	});
 });
 
-// ── context viewer formatting ─────────────────────────────────────────────────
-
 describe("context viewer formatting", () => {
 	it("formats Pi assistant tool calls and usage fields", () => {
 		const lines = formatMessageForDisplay(context.messages[1]!, 1);
@@ -160,5 +154,154 @@ describe("context viewer formatting", () => {
 		expect(text).toContain("[Image: image/png]");
 		expect(text).toContain("CONTEXT USAGE");
 		expect(text).toContain("Context Window: 1,000 / 2,000 (50.0%)");
+	});
+});
+
+describe("buildNumberedLines", () => {
+	const dummyTheme = {
+		fg: (_color: string, text: string) => text,
+		bg: (_color: string, text: string) => text,
+		bold: (text: string) => text,
+	} as any;
+
+	it("adds line numbers to each line", () => {
+		const lines = buildNumberedLines("hello\nworld", dummyTheme);
+		expect(lines).toHaveLength(2);
+		expect(lines[0]).toContain("1");
+		expect(lines[0]).toContain("hello");
+		expect(lines[1]).toContain("2");
+		expect(lines[1]).toContain("world");
+	});
+
+	it("pads line numbers to equal width", () => {
+		const lines = buildNumberedLines("a\nb\nc\nd\ne\nf\ng\nh\ni\nj", dummyTheme);
+		expect(lines[0]).toContain(" 1");
+		expect(lines[9]).toContain("10");
+	});
+
+	it("handles empty text", () => {
+		const lines = buildNumberedLines("", dummyTheme);
+		expect(lines).toHaveLength(1);
+		expect(lines[0]).toContain("1");
+	});
+});
+
+describe("buildToolsText", () => {
+	it("returns fallback for empty tools", () => {
+		const text = buildToolsText([]);
+		expect(text).toBe("(no active tools)");
+	});
+
+	it("formats tool definitions with parameters", () => {
+		const tools = [
+			{
+				name: "read",
+				description: "Read a file",
+				parameters: {
+					type: "object",
+					properties: {
+						path: { type: "string", description: "File path" },
+					},
+					required: ["path"],
+				},
+			},
+		];
+		const text = buildToolsText(tools);
+		expect(text).toContain("Tool: read");
+		expect(text).toContain("Description: Read a file");
+		expect(text).toContain("path");
+		expect(text).toContain("string");
+	});
+
+	it("formats tools without parameters", () => {
+		const tools = [{ name: "simple-tool", description: "A simple tool" }];
+		const text = buildToolsText(tools);
+		expect(text).toContain("Tool: simple-tool");
+		expect(text).toContain("A simple tool");
+	});
+});
+
+describe("buildTokenBreakdown", () => {
+	it("returns null when no usage data", () => {
+		const result = buildTokenBreakdown("system", [], [], undefined);
+		expect(result).toBeNull();
+	});
+
+	it("returns null when tokens is 0", () => {
+		const result = buildTokenBreakdown("system", [], [], { tokens: 0, contextWindow: 200000 } as any);
+		expect(result).toBeNull();
+	});
+
+	it("calculates token distribution from branch entries", () => {
+		const branch = [
+			{
+				type: "message",
+				message: {
+					role: "user",
+					content: "Hello",
+				},
+			},
+			{
+				type: "message",
+				message: {
+					role: "assistant",
+					content: [
+						{ type: "text", text: "Hi there" },
+						{ type: "toolCall", name: "read", arguments: { path: "/file" }, id: "call-1" },
+					],
+				},
+			},
+			{
+				type: "message",
+				message: {
+					role: "toolResult",
+					toolCallId: "call-1",
+					content: [{ type: "text", text: "file content here" }],
+				},
+			},
+		];
+		const result = buildTokenBreakdown("system prompt", [], branch, { tokens: 100, contextWindow: 200000 } as any);
+		expect(result).not.toBeNull();
+		expect(result!.total).toBe(100);
+		expect(result!.systemPrompt).toBeGreaterThan(0);
+		expect(result!.messages).toBeGreaterThan(0);
+		expect(result!.tools).toBeGreaterThan(0);
+	});
+
+	it("identifies skill-related tool calls", () => {
+		const branch = [
+			{
+				type: "message",
+				message: {
+					role: "assistant",
+					content: [
+						{ type: "toolCall", name: "read", arguments: { path: ".agents/skills/my-skill/SKILL.md" }, id: "skill-1" },
+					],
+				},
+			},
+			{
+				type: "message",
+				message: {
+					role: "toolResult",
+					toolCallId: "skill-1",
+					content: [{ type: "text", text: "skill content" }],
+				},
+			},
+		];
+		const result = buildTokenBreakdown("system", [], branch, { tokens: 50, contextWindow: 200000 } as any);
+		expect(result).not.toBeNull();
+		expect(result!.skills).toBeGreaterThan(0);
+	});
+
+	it("handles compaction entries", () => {
+		const branch = [
+			{
+				type: "compaction",
+				summary: "Previous conversation summary...",
+			},
+		];
+		const result = buildTokenBreakdown("system", [], branch, { tokens: 30, contextWindow: 200000 } as any);
+		expect(result).not.toBeNull();
+		expect(result!.messages).toBeGreaterThan(0);
 	});
 });

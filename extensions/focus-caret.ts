@@ -58,7 +58,7 @@ export default function (pi: ExtensionAPI) {
   });
 }
 
-class FocusAwareEditor extends CustomEditor {
+export class FocusAwareEditor extends CustomEditor {
   override handleInput(data: string): void {
     super.handleInput(data);
 

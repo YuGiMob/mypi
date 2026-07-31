@@ -166,7 +166,7 @@ export function buildTotalContextText(
 }
 
 /** Format active tool definitions as readable text for the Tools tab. */
-function buildToolsText(activeToolDefs: { name: string; description?: string; parameters?: unknown }[]): string {
+export function buildToolsText(activeToolDefs: { name: string; description?: string; parameters?: unknown }[]): string {
 	if (activeToolDefs.length === 0) return "(no active tools)";
 
 	const sections: string[] = [];
@@ -208,7 +208,7 @@ function isSkillReadToolCall(block: any): boolean {
 	return isSkillPath(block.arguments?.path ?? block.input?.path ?? block.args?.path);
 }
 
-function buildTokenBreakdown(
+export function buildTokenBreakdown(
 	systemPrompt: string,
 	activeToolDefs: unknown[],
 	branch: { type: string; message?: any; summary?: string }[],

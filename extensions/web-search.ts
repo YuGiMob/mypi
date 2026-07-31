@@ -124,7 +124,7 @@ const SEARCH_PROVIDERS: SearchProvider[] = [
   },
 ];
 
-async function webSearch(query: string, numResults: number, signal: AbortSignal): Promise<{ results: SearchResult[]; provider: string }> {
+export async function webSearch(query: string, numResults: number, signal: AbortSignal): Promise<{ results: SearchResult[]; provider: string }> {
   const errors: string[] = [];
 
   for (const provider of SEARCH_PROVIDERS) {
@@ -147,7 +147,7 @@ async function webSearch(query: string, numResults: number, signal: AbortSignal)
   );
 }
 
-function withTimeout(signal: AbortSignal, ms: number): AbortSignal {
+export function withTimeout(signal: AbortSignal, ms: number): AbortSignal {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   signal.addEventListener("abort", () => {
