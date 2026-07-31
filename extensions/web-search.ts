@@ -28,10 +28,12 @@ export default function webSearchExtension(pi: ExtensionAPI) {
     ],
     async execute(_toolCallId, params, signal, onUpdate, _ctx) {
       const { query, numResults = 5 } = params;
+      const resultCount = Math.min(10, Math.max(1, Math.round(numResults)));
+      const searchSignal = signal ?? new AbortController().signal;
       onUpdate?.({ content: [{ type: "text", text: `Searching for "${query}"...` }], details: {} });
 
       try {
-        const { results, provider } = await webSearch(query, numResults, signal!);
+        const { results, provider } = await webSearch(query, resultCount, searchSignal);
         const formattedResults = results
           .map((r, i) => {
             const content = r.content.slice(0, 200);
@@ -41,7 +43,7 @@ export default function webSearchExtension(pi: ExtensionAPI) {
 
         return {
           content: [{ type: "text", text: `Search results from ${provider} for "${query}":\n\n${formattedResults}` }],
-          details: { query, numResults, provider },
+          details: { query, numResults: resultCount, provider },
         };
       } catch (error) {
         return {
@@ -150,6 +152,10 @@ export async function webSearch(query: string, numResults: number, signal: Abort
 
 export function withTimeout(signal: AbortSignal, ms: number): AbortSignal {
   const controller = new AbortController();
+  if (signal.aborted) {
+    controller.abort();
+    return controller.signal;
+  }
   const timer = setTimeout(() => controller.abort(), ms);
   signal.addEventListener("abort", () => {
     clearTimeout(timer);

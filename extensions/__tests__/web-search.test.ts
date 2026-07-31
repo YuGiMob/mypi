@@ -76,6 +76,15 @@ describe("web-search extension", () => {
       const timeoutSignal = mod.withTimeout(parentController.signal, 1000);
 
       parentController.abort();
+      expect(timeoutSignal.aborted).toBe(true);
+    });
+
+    it("aborts immediately when parent signal is already aborted", async () => {
+      const mod = await import("../web-search.js");
+
+      const parentController = new AbortController();
+      parentController.abort();
+      const timeoutSignal = mod.withTimeout(parentController.signal, 1000);
 
       expect(timeoutSignal.aborted).toBe(true);
     });
@@ -168,6 +177,24 @@ describe("web-search extension", () => {
       await expect(
         mod.webSearch("test query", 5, signal),
       ).rejects.toThrow("All search backends failed");
+    });
+
+    it("clamps numResults to 10 in the tool request", async () => {
+      process.env.EXA_API_KEY = "test-exa-key";
+      delete process.env.BRAVE_SEARCH_API_KEY;
+      delete process.env.TAVILY_API_KEY;
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ results: [] }),
+      });
+      globalThis.fetch = fetchMock;
+
+      const signal = new AbortController().signal;
+      await capturedTool.execute("call-1", { query: "test", numResults: 100 }, signal, undefined, {});
+
+      const body = JSON.parse(fetchMock.mock.calls[0]![1]!.body);
+      expect(body.numResults).toBe(10);
     });
   });
 });

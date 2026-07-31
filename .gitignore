@@ -9,7 +9,9 @@ Thumbs.db
 
 # Node (for extensions with dependencies)
 node_modules/
-npm/
+npm/*
+!npm/package.json
+!npm/vitest.config.ts
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

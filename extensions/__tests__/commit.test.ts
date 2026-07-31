@@ -127,6 +127,58 @@ describe("commit extension", () => {
       expect(await isBlocked("git clone https://example.com/repo.git")).toBe(true);
     });
 
+    it("blocks git config", async () => {
+      expect(await isBlocked("git config user.email test@example.com")).toBe(true);
+    });
+
+    it("blocks git remote add", async () => {
+      expect(await isBlocked("git remote add origin https://example.com/repo.git")).toBe(true);
+    });
+
+    it("blocks git apply", async () => {
+      expect(await isBlocked("git apply patch.diff")).toBe(true);
+    });
+
+    it("blocks git am", async () => {
+      expect(await isBlocked("git am 0001-fix.patch")).toBe(true);
+    });
+
+    it("blocks git notes add", async () => {
+      expect(await isBlocked("git notes add -m note")).toBe(true);
+    });
+
+    it("blocks git replace", async () => {
+      expect(await isBlocked("git replace HEAD HEAD~1")).toBe(true);
+    });
+
+    it("blocks git update-ref", async () => {
+      expect(await isBlocked("git update-ref refs/heads/main HEAD")).toBe(true);
+    });
+
+    it("blocks git symbolic-ref", async () => {
+      expect(await isBlocked("git symbolic-ref HEAD refs/heads/main")).toBe(true);
+    });
+
+    it("blocks git update-index", async () => {
+      expect(await isBlocked("git update-index --assume-unchanged file.txt")).toBe(true);
+    });
+
+    it("blocks git gc", async () => {
+      expect(await isBlocked("git gc --prune=now")).toBe(true);
+    });
+
+    it("blocks git maintenance", async () => {
+      expect(await isBlocked("git maintenance run")).toBe(true);
+    });
+
+    it("blocks git sparse-checkout set", async () => {
+      expect(await isBlocked("git sparse-checkout set src")).toBe(true);
+    });
+
+    it("blocks git lfs push", async () => {
+      expect(await isBlocked("git lfs push origin main")).toBe(true);
+    });
+
     it("blocks git branch -d", async () => {
       expect(await isBlocked("git branch -d old-branch")).toBe(true);
     });
@@ -207,6 +259,46 @@ describe("commit extension", () => {
       expect(await isBlocked("git worktree list")).toBe(false);
     });
 
+    it("allows git config --list", async () => {
+      expect(await isBlocked("git config --list")).toBe(false);
+    });
+
+    it("allows git config --get", async () => {
+      expect(await isBlocked("git config --get user.name")).toBe(false);
+    });
+
+    it("allows git remote -v", async () => {
+      expect(await isBlocked("git remote -v")).toBe(false);
+    });
+
+    it("allows git remote (bare list)", async () => {
+      expect(await isBlocked("git remote")).toBe(false);
+    });
+
+    it("allows git remote show", async () => {
+      expect(await isBlocked("git remote show origin")).toBe(false);
+    });
+
+    it("allows git remote get-url", async () => {
+      expect(await isBlocked("git remote get-url origin")).toBe(false);
+    });
+
+    it("allows git apply --check", async () => {
+      expect(await isBlocked("git apply --check patch.diff")).toBe(false);
+    });
+
+    it("allows git notes list", async () => {
+      expect(await isBlocked("git notes list")).toBe(false);
+    });
+
+    it("allows git lfs ls-files", async () => {
+      expect(await isBlocked("git lfs ls-files")).toBe(false);
+    });
+
+    it("allows git sparse-checkout list", async () => {
+      expect(await isBlocked("git sparse-checkout list")).toBe(false);
+    });
+
     it("allows non-git commands", async () => {
       expect(await isBlocked("ls -la")).toBe(false);
     });
@@ -250,6 +342,13 @@ describe("commit extension", () => {
       pi.getActiveTools = vi.fn(() => []);
       sessionStartHandler!();
       expect(pi.setActiveTools).toHaveBeenCalled();
+    });
+  });
+
+  describe("block reason", () => {
+    it("includes a hint about /toggle-allow-git", async () => {
+      const result = await toolCallHandler!({ toolName: "bash", input: { command: "git push" } });
+      expect(result.reason).toContain("/toggle-allow-git");
     });
   });
 });

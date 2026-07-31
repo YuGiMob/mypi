@@ -81,4 +81,36 @@ describe("focus-caret extension", () => {
       expect(hideCalls).toBeGreaterThan(0);
     });
   });
+
+  describe("cursor state deduplication", () => {
+    it("does not write escape sequences while idle", async () => {
+      vi.useFakeTimers();
+      try {
+        const handlers = new Map<string, (...args: any[]) => any>();
+        const pi = {
+          on: vi.fn((event: string, handler: (...args: any[]) => any) => {
+            handlers.set(event, handler);
+          }),
+        };
+
+        const mod = await import("../focus-caret.js");
+        mod.default(pi as any);
+
+        const ctx = {
+          ui: {
+            onTerminalInput: vi.fn(() => undefined),
+            setEditorComponent: vi.fn(),
+          },
+        };
+        handlers.get("session_start")!(undefined, ctx);
+        stdoutWriteSpy.mockClear();
+
+        vi.advanceTimersByTime(100);
+
+        expect(stdoutWriteSpy).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
 });

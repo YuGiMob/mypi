@@ -54,10 +54,11 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
 
 export default async function (pi: ExtensionAPI) {
   const baseUrl = "https://ollama.com/v1";
+  const discoveryTimeoutMs = 10_000;
 
   let modelIds: string[] = [];
   try {
-    const resp = await fetch("https://ollama.com/api/tags");
+    const resp = await fetch("https://ollama.com/api/tags", { signal: AbortSignal.timeout(discoveryTimeoutMs) });
     if (resp.ok) {
       const data = (await resp.json()) as { models: Array<{ name: string }> };
       modelIds = data.models.map((m) => m.name);
@@ -70,7 +71,7 @@ export default async function (pi: ExtensionAPI) {
 
   if (modelIds.length === 0) {
     try {
-      const resp = await fetch(`${baseUrl}/models`);
+      const resp = await fetch(`${baseUrl}/models`, { signal: AbortSignal.timeout(discoveryTimeoutMs) });
       if (resp.ok) {
         const data = (await resp.json()) as { data: Array<{ id: string }> };
         modelIds = data.data.map((m) => m.id);

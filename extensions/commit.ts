@@ -10,9 +10,20 @@ export default function (pi: ExtensionAPI) {
     const alwaysBlocked = /\bgit\s+(add|commit|push|pull|merge|rebase|reset|clean|rm|restore|switch|cherry-pick|revert|mv|init|clone)\b/;
     if (alwaysBlocked.test(command)) return true;
 
-    if (/\bgit\s+fetch\b/.test(command)) return false;
+    const readOnlyForms = [
+      /\bgit\s+fetch\b/,
+      /\bgit\s+stash\s+(list|show)\b/,
+      /\bgit\s+remote\s*$/,
+      /\bgit\s+config\s+(--list|-l|--get|--get-all|--get-regexp|--show-origin|--show-scope)\b/,
+      /\bgit\s+remote\s+(-v|show|get-url)\b/,
+      /\bgit\s+apply\s+--(check|stat)\b/,
+      /\bgit\s+notes\s+(list|show)\b/,
+      /\bgit\s+lfs\s+(ls-files|status)\b/,
+      /\bgit\s+sparse-checkout\s+list\b/,
+    ];
+    if (readOnlyForms.some((re) => re.test(command))) return false;
 
-    if (/\bgit\s+stash\s+(list|show)\b/.test(command)) return false;
+    if (/\bgit\s+(config|remote|apply|am|notes|replace|update-ref|symbolic-ref|update-index|gc|maintenance|sparse-checkout|lfs)\b/.test(command)) return true;
 
     if (/\bgit\s+branch\b/.test(command)) {
       if (/\bgit\s+branch\s+(-d|-D|-m|-M|--delete|--move)\b/.test(command)) return true;
@@ -42,7 +53,7 @@ export default function (pi: ExtensionAPI) {
     if (event.toolName !== "bash") return undefined;
     const command = (event.input.command as string).trim();
     if (gitBlocked && containsBlockedGitCommand(command)) {
-      return { block: true, reason: "Mutative git commands are blocked" };
+      return { block: true, reason: "Mutative git commands are blocked. Use /toggle-allow-git to allow for this session." };
     }
     return undefined;
   });
