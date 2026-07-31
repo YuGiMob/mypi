@@ -22,16 +22,16 @@ import { TabbedOverlay } from "../../edb-context-viewer/src/tabbed-overlay.js";
 function createMockTab(name: string) {
   return {
     name,
-    getAboveContentLine: vi.fn(() => null),
-    renderContent: vi.fn(() => []),
+    getAboveContentLine: vi.fn((_innerWidth: number) => null),
+    renderContent: vi.fn((_innerWidth: number, _height: number): string[] => []),
     getFooterLeft: vi.fn(() => ""),
     footerHints: "",
-    handleInput: vi.fn(() => false),
+    handleInput: vi.fn((_data: string) => false),
     invalidate: vi.fn(),
   };
 }
 
-function createTheme() {
+function createTheme(): any {
   return {
     fg: vi.fn((_color: string, text: string) => text),
     bg: vi.fn((_color: string, text: string) => text),
@@ -43,7 +43,7 @@ describe("TabbedOverlay", () => {
   let theme: ReturnType<typeof createTheme>;
   let tab1: ReturnType<typeof createMockTab>;
   let tab2: ReturnType<typeof createMockTab>;
-  let done: ReturnType<typeof vi.fn>;
+  let done: any;
   let overlay: TabbedOverlay;
 
   beforeEach(() => {
@@ -135,7 +135,7 @@ describe("TabbedOverlay", () => {
     });
 
     it("highlights the active tab", () => {
-      const lines = overlay.render(80);
+      overlay.render(80);
       expect(theme.fg).toHaveBeenCalledWith("accent", expect.stringContaining("Tab1"));
     });
 

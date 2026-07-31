@@ -33,6 +33,8 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     if (interval) clearInterval(interval);
     unsubscribe?.();
+    hasFocus = true;
+    shouldHideCaret = false;
     showCursor();
     interval = setInterval(updateCursor, 20);
 
@@ -44,6 +46,7 @@ export default function (pi: ExtensionAPI) {
         hasFocus = true;
         showCursor();
       }
+      return undefined;
     });
 
     ctx.ui.setEditorComponent((tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager) => {

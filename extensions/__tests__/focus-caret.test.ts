@@ -29,7 +29,7 @@ describe("focus-caret extension", () => {
       };
 
       const mod = await import("../focus-caret.js");
-      mod.default(pi);
+      mod.default(pi as any);
 
       expect(pi.on).toHaveBeenCalledWith("session_start", expect.any(Function));
       expect(pi.on).toHaveBeenCalledWith("session_shutdown", expect.any(Function));

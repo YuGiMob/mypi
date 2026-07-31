@@ -1,6 +1,5 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
 import type { TabContent } from "./tabbed-overlay.js";
-import { CONTENT_HEIGHT } from "./tabbed-overlay.js";
 import { ScrollableBase } from "./scrollable-base.js";
 
 export interface ScrollableTabContentOptions {
@@ -20,7 +19,6 @@ export class ScrollableTabContent extends ScrollableBase implements TabContent {
   protected get rawText(): string { return this.opts.rawText; }
   protected get displayLines(): string[] { return this.opts.displayLines; }
   protected get theme(): Theme { return this.opts.theme; }
-  protected getVisibleLines(): number { return CONTENT_HEIGHT; }
 
   getAboveContentLine(_innerWidth: number): string | null {
     const th = this.opts.theme;

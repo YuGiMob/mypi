@@ -12,9 +12,7 @@
 
 import type { Theme } from "@earendil-works/pi-coding-agent";
 import { Key, matchesKey } from "@earendil-works/pi-tui";
-import { createBorderHelpers, createTitle } from "./utils.js";
-/** Number of lines shown in the content area of each tab. */
-export const CONTENT_HEIGHT = 28;
+import { createBorderHelpers, createTitle, CONTENT_HEIGHT } from "./utils.js";
 
 /**
  * Interface that each tab must implement.

@@ -26,12 +26,12 @@ export default function webSearchExtension(pi: ExtensionAPI) {
       "Use web_search when you need current information or facts not in the codebase",
       "Use curl in bash to fetch full page content from URLs returned by web_search",
     ],
-    async execute(toolCallId, params, signal, onUpdate) {
+    async execute(_toolCallId, params, signal, onUpdate, _ctx) {
       const { query, numResults = 5 } = params;
-      onUpdate?.({ content: [{ type: "text", text: `Searching for "${query}"...` }] });
+      onUpdate?.({ content: [{ type: "text", text: `Searching for "${query}"...` }], details: {} });
 
       try {
-        const { results, provider } = await webSearch(query, numResults, signal);
+        const { results, provider } = await webSearch(query, numResults, signal!);
         const formattedResults = results
           .map((r, i) => {
             const content = r.content.slice(0, 200);
@@ -46,6 +46,7 @@ export default function webSearchExtension(pi: ExtensionAPI) {
       } catch (error) {
         return {
           content: [{ type: "text", text: `Search error: ${error instanceof Error ? error.message : "Unknown error"}` }],
+          details: {},
           isError: true,
         };
       }

@@ -12,6 +12,8 @@ export const formatTokens = (n: number | null | undefined): string => {
 	return n.toString();
 };
 
+export const CONTENT_HEIGHT = 28;
+
 export interface BorderHelpers {
   pad: (s: string, len: number) => string;
   row: (content: string) => string;

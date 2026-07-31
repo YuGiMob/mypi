@@ -51,7 +51,7 @@ vi.mock("../../edb-context-viewer/src/tabbed-overlay.js", () => ({
 
 import { ScrollableTabContent } from "../../edb-context-viewer/src/scrollable-tab-content.js";
 
-function createTheme() {
+function createTheme(): any {
   return {
     fg: vi.fn((_color: string, text: string) => text),
     bg: vi.fn((_color: string, text: string) => text),
@@ -220,7 +220,7 @@ describe("ScrollableTabContent", () => {
       (content as any).searchQuery = "line3";
       (content as any).findMatches();
       (content as any).currentMatchIndex = 0;
-      const lines = content.renderContent(80, 5);
+      content.renderContent(80, 5);
       expect(theme.bg).toHaveBeenCalledWith("selectedBg", "line3");
     });
   });

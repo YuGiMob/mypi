@@ -1,5 +1,6 @@
 import { copyToClipboard as copyTextToClipboard, type Theme } from "@earendil-works/pi-coding-agent";
 import { Key, matchesKey, sliceByColumn, visibleWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
+import { CONTENT_HEIGHT } from "./utils.js";
 
 export abstract class ScrollableBase {
   protected scrollOffset = 0;
@@ -17,7 +18,7 @@ export abstract class ScrollableBase {
   protected abstract get theme(): Theme;
 
   protected getVisibleLines(): number {
-    return 28;
+    return CONTENT_HEIGHT;
   }
 
   protected buildVisualLines(innerWidth: number): void {

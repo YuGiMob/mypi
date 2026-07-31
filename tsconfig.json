@@ -11,7 +11,13 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@earendil-works/pi-coding-agent": ["./npm/node_modules/@earendil-works/pi-coding-agent"],
+      "@earendil-works/pi-tui": ["./npm/node_modules/@earendil-works/pi-tui"],
+      "typebox": ["./npm/node_modules/typebox"],
+      "vitest": ["./npm/node_modules/vitest"]
+    }
   },
   "include": [
     "extensions/**/*.ts"

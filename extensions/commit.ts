@@ -57,27 +57,23 @@ export default function (pi: ExtensionAPI) {
       "Do not call git_commit on its own — wait for the user to run /commit first",
     ],
     parameters: Type.Object({
-      type: Type.Union([Type.Literal("FIX"), Type.Literal("IMPROVE"), Type.Literal("NEW")]),
+      type: Type.Union(COMMIT_TYPES.map((t) => Type.Literal(t))),
       message: Type.String({
         description: "Commit message (imperative mood). Multi-line allowed for detailed changes.",
       }),
     }),
-    async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+    async execute(_toolCallId, params, signal, _onUpdate, _ctx) {
 
       const { type, message } = params;
-      if (!COMMIT_TYPES.includes(type as typeof COMMIT_TYPES[number])) {
-        return { content: [{ type: "text", text: `Invalid type: ${type}. Must be one of: ${COMMIT_TYPES.join(", ")}` }], details: {}, isError: true };
-      }
-
       const fullMessage = `${type}: ${message}`;
       const addResult = await pi.exec("git", ["add", "."], { signal });
       if (addResult.code !== 0) {
-        return { content: [{ type: "text", text: `Staging failed: ${addResult.stderr}` }], details: {} };
+        return { content: [{ type: "text", text: `Staging failed: ${addResult.stderr}` }], details: {}, isError: true };
       }
 
       const result = await pi.exec("git", ["commit", "-m", fullMessage], { signal });
       if (result.code !== 0) {
-        return { content: [{ type: "text", text: `Commit failed: ${result.stderr}` }], details: {} };
+        return { content: [{ type: "text", text: `Commit failed: ${result.stderr}` }], details: {}, isError: true };
       }
 
       return { content: [{ type: "text", text: `✓ Committed: ${fullMessage}` }], details: {} };
