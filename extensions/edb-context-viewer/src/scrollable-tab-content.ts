@@ -1,5 +1,4 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
-import { Key, matchesKey } from "@earendil-works/pi-tui";
 import type { TabContent } from "./tabbed-overlay.js";
 import { CONTENT_HEIGHT } from "./tabbed-overlay.js";
 import { ScrollableBase } from "./scrollable-base.js";
@@ -59,61 +58,7 @@ export class ScrollableTabContent extends ScrollableBase implements TabContent {
   readonly footerHints = "↑↓ scroll · / search · n/N next · y copy";
 
   handleInput(data: string): boolean {
-    if (this.handleSearchInput(data)) return true;
-
-    if (matchesKey(data, Key.down) || data === "j") {
-      this.scrollDown(1, Math.max(0, this.visualTotal - 1));
-      return true;
-    }
-    if (matchesKey(data, Key.up) || data === "k") {
-      this.scrollUp(1);
-      return true;
-    }
-    if (matchesKey(data, Key.home) || data === "g") {
-      this.scrollOffset = 0;
-      return true;
-    }
-    if (matchesKey(data, Key.end) || data === "G") {
-      this.scrollToBottom(Math.max(0, this.visualTotal - 1));
-      return true;
-    }
-    if (matchesKey(data, Key.pageDown) || matchesKey(data, Key.ctrl("f"))) {
-      this.scrollDown(28, Math.max(0, this.visualTotal - 1));
-      return true;
-    }
-    if (matchesKey(data, Key.pageUp) || matchesKey(data, Key.ctrl("b"))) {
-      this.scrollUp(28);
-      return true;
-    }
-    if (matchesKey(data, Key.ctrl("d"))) {
-      this.scrollDown(14, Math.max(0, this.visualTotal - 1));
-      return true;
-    }
-    if (matchesKey(data, Key.ctrl("u"))) {
-      this.scrollUp(14);
-      return true;
-    }
-    if (data === "/") {
-      this.searchMode = true;
-      this.searchQuery = "";
-      this.searchMatches = [];
-      this.currentMatchIndex = -1;
-      return true;
-    }
-    if (data === "n") {
-      this.nextMatch();
-      return true;
-    }
-    if (data === "N") {
-      this.prevMatch();
-      return true;
-    }
-    if (data === "y") {
-      void this.copyToClipboard();
-      return true;
-    }
-
-    return false;
+    return this.handleScrollKey(data);
   }
 
   renderContent(innerWidth: number, height: number): string[] {

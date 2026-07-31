@@ -11,8 +11,8 @@
  */
 
 import type { Theme } from "@earendil-works/pi-coding-agent";
-import { Key, matchesKey, visibleWidth } from "@earendil-works/pi-tui";
-
+import { Key, matchesKey } from "@earendil-works/pi-tui";
+import { createBorderHelpers, createTitle } from "./utils.js";
 /** Number of lines shown in the content area of each tab. */
 export const CONTENT_HEIGHT = 28;
 
@@ -100,19 +100,10 @@ export class TabbedOverlay {
 		const innerW = width - 2;
 		const lines: string[] = [];
 
-		// ANSI-aware padding: pad styled string to `len` visible columns.
-		const pad = (s: string, len: number) => s + " ".repeat(Math.max(0, len - visibleWidth(s)));
+		const { row, borderTop, borderSep, borderBottom } = createBorderHelpers(th, innerW);
+		const title = createTitle(th, this.opts.title, this.opts.subtitle);
 
-		const row = (content: string) => th.fg("border", "│") + pad(content, innerW) + th.fg("border", "│");
-		const borderTop = th.fg("border", `╭${"─".repeat(innerW)}╮`);
-		const borderSep = th.fg("border", `├${"─".repeat(innerW)}┤`);
-		const borderBottom = th.fg("border", `╰${"─".repeat(innerW)}╯`);
-
-		// ── Top border ──────────────────────────────────────────────────────────
 		lines.push(borderTop);
-
-		// ── Title row ───────────────────────────────────────────────────────────
-		const title = ` ${th.fg("accent", th.bold(this.opts.title))}  ${th.fg("dim", `(${this.opts.subtitle})`)}`;
 		lines.push(row(title));
 
 		// ── Tab bar ─────────────────────────────────────────────────────────────

@@ -168,7 +168,7 @@ describe("ScrollableTabContent", () => {
       (content as any).visualTotal = 100;
       (content as any).scrollOffset = 0;
       content.handleInput("G");
-      expect((content as any).scrollOffset).toBe(99);
+      expect((content as any).scrollOffset).toBe(72);
     });
 
     it("enters search mode on /", () => {

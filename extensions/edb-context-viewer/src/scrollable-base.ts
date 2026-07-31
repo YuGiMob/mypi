@@ -94,6 +94,66 @@ export abstract class ScrollableBase {
     return true;
   }
 
+  protected handleScrollKey(data: string): boolean {
+    if (this.handleSearchInput(data)) return true;
+
+    const visibleLines = this.getVisibleLines();
+    const maxOffset = Math.max(0, this.visualTotal - visibleLines);
+
+    if (matchesKey(data, Key.down) || data === "j") {
+      this.scrollDown(1, maxOffset);
+      return true;
+    }
+    if (matchesKey(data, Key.up) || data === "k") {
+      this.scrollUp(1);
+      return true;
+    }
+    if (matchesKey(data, Key.home) || data === "g") {
+      this.scrollOffset = 0;
+      return true;
+    }
+    if (matchesKey(data, Key.end) || data === "G") {
+      this.scrollToBottom(maxOffset);
+      return true;
+    }
+    if (matchesKey(data, Key.pageDown) || matchesKey(data, Key.ctrl("f"))) {
+      this.scrollDown(visibleLines - 2, maxOffset);
+      return true;
+    }
+    if (matchesKey(data, Key.pageUp) || matchesKey(data, Key.ctrl("b"))) {
+      this.scrollUp(visibleLines - 2);
+      return true;
+    }
+    if (matchesKey(data, Key.ctrl("d"))) {
+      this.scrollDown(Math.floor(visibleLines / 2), maxOffset);
+      return true;
+    }
+    if (matchesKey(data, Key.ctrl("u"))) {
+      this.scrollUp(Math.floor(visibleLines / 2));
+      return true;
+    }
+    if (data === "/") {
+      this.searchMode = true;
+      this.searchQuery = "";
+      this.searchMatches = [];
+      this.currentMatchIndex = -1;
+      return true;
+    }
+    if (data === "n") {
+      this.nextMatch();
+      return true;
+    }
+    if (data === "N") {
+      this.prevMatch();
+      return true;
+    }
+    if (data === "y") {
+      void this.copyToClipboard();
+      return true;
+    }
+
+    return false;
+  }
   protected findMatches(): void {
     const query = this.searchQuery.toLowerCase();
     const rawLines = this.rawText.split("\n");
