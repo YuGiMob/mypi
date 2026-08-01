@@ -114,4 +114,25 @@ describe("ollama-cloud extension", () => {
     expect(model.contextWindow).toBe(1_048_576);
     expect(model.maxTokens).toBe(65_536);
   });
+
+  it("strips date-stamped snapshot suffixes from model IDs for metadata lookup", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        models: [
+          { name: "deepseek-v4-flash:0731" },
+        ],
+      }),
+    });
+
+    const mod = await import("../ollama-cloud.js");
+    await mod.default(pi);
+
+    const providerConfig = pi.registerProvider.mock.calls[0]![1];
+    const model = providerConfig.models[0]!;
+    expect(model.id).toBe("deepseek-v4-flash:0731");
+    expect(model.contextWindow).toBe(1_048_576);
+    expect(model.maxTokens).toBe(65_536);
+    expect(model.reasoning).toBe(true);
+  });
 });

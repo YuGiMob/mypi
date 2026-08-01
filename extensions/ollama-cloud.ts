@@ -51,6 +51,7 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "rnj-1:8b": { contextWindow: 128_000, maxTokens: 8192, reasoning: false, vision: false },
 };
 
+const normalizeModelId = (id: string): string => id.replace(/:(cloud|\d{4,8})$/, "");
 
 export default async function (pi: ExtensionAPI) {
   const baseUrl = "https://ollama.com/v1";
@@ -89,8 +90,7 @@ export default async function (pi: ExtensionAPI) {
   }
 
   const apiModels: ApiModel[] = modelIds.map((id) => {
-    const bareId = id.replace(/:cloud$/, "");
-    const meta = KNOWN_MODELS[id] ?? KNOWN_MODELS[bareId] ?? DEFAULT_META;
+    const meta = KNOWN_MODELS[id] ?? KNOWN_MODELS[normalizeModelId(id)] ?? DEFAULT_META;
     return {
       id,
       contextWindow: meta.contextWindow,
@@ -98,7 +98,7 @@ export default async function (pi: ExtensionAPI) {
     };
   });
 
-  const models = buildModels(apiModels, KNOWN_MODELS, (id) => id.replace(/:cloud$/, ""));
+  const models = buildModels(apiModels, KNOWN_MODELS, normalizeModelId);
   registerProvider(pi, "ollama-cloud", {
     name: "Ollama Cloud",
     baseUrl,
