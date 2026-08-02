@@ -107,32 +107,36 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
-      await ctx.ui.setWorkingMessage("Waiting for queued messages to complete...");
-      await ctx.waitForIdle();
+      try {
+        await ctx.ui.setWorkingMessage("Waiting for queued messages to complete...");
+        await ctx.waitForIdle();
 
-      await ctx.ui.setWorkingMessage("Staging files...");
-      const addResult = await pi.exec("git", ["add", "."]);
-      if (addResult.code !== 0) {
-        ctx.ui.notify(`git add failed: ${addResult.stderr}`, "error");
-        return;
+        await ctx.ui.setWorkingMessage("Staging files...");
+        const addResult = await pi.exec("git", ["add", "."]);
+        if (addResult.code !== 0) {
+          ctx.ui.notify(`git add failed: ${addResult.stderr}`, "error");
+          return;
+        }
+
+        await ctx.ui.setWorkingMessage("Getting diff...");
+        const diffResult = await pi.exec("git", ["diff", "--staged"]);
+        if (diffResult.code !== 0) {
+          ctx.ui.notify(`git diff failed: ${diffResult.stderr}`, "error");
+          return;
+        }
+
+        if (!diffResult.stdout.trim()) {
+          ctx.ui.notify("Nothing to commit (empty diff). Stage files first.", "warning");
+          return;
+        }
+
+        const diff = diffResult.stdout || "(no changes staged)";
+
+        const prompt = `DO NOT use bash for git. Use ONLY the \`git_commit\` tool.\n\nReview staged changes:\n\`\`\`diff\n${diff}\`\`\`\n\nUse \`git_commit\` tool with:\n- type: FIX (bug fix), IMPROVE (improvement), or NEW (new feature)\n- message: brief description (imperative mood). Multi-line allowed for detailed changes.`;
+        pi.sendUserMessage(prompt, { deliverAs: "followUp" });
+      } finally {
+        ctx.ui.setWorkingMessage();
       }
-
-      await ctx.ui.setWorkingMessage("Getting diff...");
-      const diffResult = await pi.exec("git", ["diff", "--staged"]);
-      if (diffResult.code !== 0) {
-        ctx.ui.notify(`git diff failed: ${diffResult.stderr}`, "error");
-        return;
-      }
-
-      if (!diffResult.stdout.trim()) {
-        ctx.ui.notify("Nothing to commit (empty diff). Stage files first.", "warning");
-        return;
-      }
-
-      const diff = diffResult.stdout || "(no changes staged)";
-
-      const prompt = `DO NOT use bash for git. Use ONLY the \`git_commit\` tool.\n\nReview staged changes:\n\`\`\`diff\n${diff}\`\`\`\n\nUse \`git_commit\` tool with:\n- type: FIX (bug fix), IMPROVE (improvement), or NEW (new feature)\n- message: brief description (imperative mood). Multi-line allowed for detailed changes.`;
-      pi.sendUserMessage(prompt, { deliverAs: "followUp" });
     },
   });
   pi.registerCommand("toggle-allow-git", {

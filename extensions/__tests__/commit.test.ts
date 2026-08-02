@@ -351,4 +351,64 @@ describe("commit extension", () => {
       expect(result.reason).toContain("/toggle-allow-git");
     });
   });
+
+  describe("/commit command handler", () => {
+    const commitCommand = () => capturedCommands.find((c: any) => c.name === "commit");
+
+    function createCtx() {
+      return {
+        hasUI: true,
+        ui: {
+          notify: vi.fn(),
+          setWorkingMessage: vi.fn(),
+        },
+        waitForIdle: vi.fn(),
+      };
+    }
+
+    it("sends the follow-up with the staged diff and restores the default working message", async () => {
+      pi.exec = vi.fn().mockResolvedValue({ code: 0, stdout: "diff --git a/x b/x", stderr: "" });
+      const ctx = createCtx();
+
+      await commitCommand()!.cmd.handler("", ctx);
+
+      expect(pi.sendUserMessage).toHaveBeenCalledWith(
+        expect.stringContaining("diff --git a/x b/x"),
+        { deliverAs: "followUp" },
+      );
+      expect(ctx.ui.setWorkingMessage).toHaveBeenLastCalledWith();
+    });
+
+    it("restores the default working message when git add fails", async () => {
+      pi.exec = vi.fn().mockResolvedValue({ code: 1, stdout: "", stderr: "fatal: not a git repository" });
+      const ctx = createCtx();
+
+      await commitCommand()!.cmd.handler("", ctx);
+
+      expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("git add failed"), "error");
+      expect(ctx.ui.setWorkingMessage).toHaveBeenLastCalledWith();
+    });
+
+    it("restores the default working message when git diff fails", async () => {
+      pi.exec = vi.fn()
+        .mockResolvedValueOnce({ code: 0, stdout: "", stderr: "" })
+        .mockResolvedValueOnce({ code: 1, stdout: "", stderr: "fatal" });
+      const ctx = createCtx();
+
+      await commitCommand()!.cmd.handler("", ctx);
+
+      expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("git diff failed"), "error");
+      expect(ctx.ui.setWorkingMessage).toHaveBeenLastCalledWith();
+    });
+
+    it("restores the default working message when there is nothing staged", async () => {
+      pi.exec = vi.fn().mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+      const ctx = createCtx();
+
+      await commitCommand()!.cmd.handler("", ctx);
+
+      expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("Nothing to commit"), "warning");
+      expect(ctx.ui.setWorkingMessage).toHaveBeenLastCalledWith();
+    });
+  });
 });
