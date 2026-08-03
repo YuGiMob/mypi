@@ -1,29 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import type { AutocompleteItem } from "@earendil-works/pi-tui";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { getMessages, setMessages } from "./lib/messages.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const MESSAGES_FILE = join(__dirname, "messages.json");
-
-function getMessages(): Record<string, string> {
-  if (existsSync(MESSAGES_FILE)) {
-    try {
-      const content = readFileSync(MESSAGES_FILE, "utf-8").trim();
-      return JSON.parse(content);
-    } catch (err) {
-      console.error("Failed to read messages:", err);
-      return {};
-    }
-  }
-  return {};
-}
-
-function setMessages(messages: Record<string, string>): void {
-  writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2), "utf-8");
-}
 function messageCompletions(prefix: string): AutocompleteItem[] {
   const messages = getMessages();
   const items = Object.keys(messages).map((num) => ({
