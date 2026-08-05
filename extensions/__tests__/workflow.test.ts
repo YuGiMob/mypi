@@ -160,11 +160,12 @@ describe("workflow extension", () => {
     expect(sent).toEqual([MSG3, MSG6, MSG5, MSG8, MSG9, MSG8, MSG9]);
   });
 
-  it("stages changes and resets context before each review round", async () => {
+  it("stages changes, checks for changes, and resets context each review round", async () => {
     const ctx = createCtx(fullPhaseA());
     await command.cmd.handler("", ctx);
-    expect(pi.exec).toHaveBeenCalledTimes(2);
+    expect(pi.exec).toHaveBeenCalledTimes(6);
     expect(pi.exec).toHaveBeenCalledWith("git", ["add", "."]);
+    expect(pi.exec).toHaveBeenCalledWith("git", ["status", "--porcelain"]);
     expect(ctx.navigateTree).toHaveBeenCalledTimes(2);
     expect(ctx.navigateTree).toHaveBeenCalledWith("a1", { summarize: false });
   });
@@ -172,7 +173,7 @@ describe("workflow extension", () => {
   it("runs the requested number of rounds", async () => {
     const ctx = createCtx(fullPhaseA());
     await command.cmd.handler("3", ctx);
-    expect(pi.exec).toHaveBeenCalledTimes(3);
+    expect(pi.exec).toHaveBeenCalledTimes(9);
     expect(ctx.navigateTree).toHaveBeenCalledTimes(3);
     const sent = pi.sendUserMessage.mock.calls.map((c: any[]) => c[0]);
     expect(sent).toEqual([MSG8, MSG9, MSG8, MSG9, MSG8, MSG9]);
@@ -181,13 +182,13 @@ describe("workflow extension", () => {
   it("uses the default round count for invalid arguments", async () => {
     const ctx = createCtx(fullPhaseA());
     await command.cmd.handler("abc", ctx);
-    expect(pi.exec).toHaveBeenCalledTimes(2);
+    expect(pi.exec).toHaveBeenCalledTimes(6);
   });
 
   it("clamps rounds to the maximum", async () => {
     const ctx = createCtx(fullPhaseA());
     await command.cmd.handler("99", ctx);
-    expect(pi.exec).toHaveBeenCalledTimes(5);
+    expect(pi.exec).toHaveBeenCalledTimes(15);
   });
 
   it("aborts when git add fails", async () => {
@@ -197,6 +198,55 @@ describe("workflow extension", () => {
     expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("git add failed"), "error");
     expect(ctx.navigateTree).not.toHaveBeenCalled();
     expect(pi.sendUserMessage).not.toHaveBeenCalled();
+  });
+
+  it("sends the validation message when changes are detected", async () => {
+    pi.exec = vi.fn(async (cmd: string, args: string[]) =>
+      cmd === "git" && args[0] === "status"
+        ? { code: 0, stdout: " M modified.txt", stderr: "" }
+        : { code: 0, stdout: "", stderr: "" },
+    );
+    const ctx = createCtx(fullPhaseA());
+    await command.cmd.handler("", ctx);
+    const sent = pi.sendUserMessage.mock.calls.map((c: any[]) => c[0]);
+    expect(sent).toEqual([MSG8, MSG9, MSG5, MSG8, MSG9, MSG5]);
+  });
+
+  it("skips the validation message when no changes are detected", async () => {
+    const ctx = createCtx(fullPhaseA());
+    await command.cmd.handler("", ctx);
+    const sent = pi.sendUserMessage.mock.calls.map((c: any[]) => c[0]);
+    expect(sent).toEqual([MSG8, MSG9, MSG8, MSG9]);
+    expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("no changes detected"), "info");
+  });
+
+  it("skips the validation message only in rounds without changes", async () => {
+    let statusCalls = 0;
+    pi.exec = vi.fn(async (cmd: string, args: string[]) => {
+      if (cmd === "git" && args[0] === "status") {
+        statusCalls++;
+        return statusCalls === 1
+          ? { code: 0, stdout: "", stderr: "" }
+          : { code: 0, stdout: " M modified.txt", stderr: "" };
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    });
+    const ctx = createCtx(fullPhaseA());
+    await command.cmd.handler("", ctx);
+    const sent = pi.sendUserMessage.mock.calls.map((c: any[]) => c[0]);
+    expect(sent).toEqual([MSG8, MSG9, MSG8, MSG9, MSG5]);
+    expect(statusCalls).toBe(2);
+  });
+
+  it("aborts when git status fails", async () => {
+    pi.exec = vi.fn(async (cmd: string, args: string[]) =>
+      cmd === "git" && args[0] === "status"
+        ? { code: 1, stdout: "", stderr: "fatal" }
+        : { code: 0, stdout: "", stderr: "" },
+    );
+    const ctx = createCtx(fullPhaseA());
+    await command.cmd.handler("", ctx);
+    expect(ctx.ui.notify).toHaveBeenCalledWith(expect.stringContaining("git status failed"), "error");
   });
 
   it("aborts when navigation is cancelled", async () => {

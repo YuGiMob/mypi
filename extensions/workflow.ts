@@ -2,7 +2,8 @@ import type { ExtensionAPI, SessionEntry } from "@earendil-works/pi-coding-agent
 import { getMessages } from "./lib/messages.js";
 
 const ANALYSIS_PHASE = ["1", "2", "3", "6", "5"];
-const REVIEW_SEQUENCE = ["8", "9"];
+const VALIDATION_MESSAGE = "5";
+const REVIEW_SEQUENCE = ["8", "9", VALIDATION_MESSAGE];
 const DEFAULT_ROUNDS = 2;
 const MAX_ROUNDS = 5;
 const SEND_START_TIMEOUT_MS = 5000;
@@ -88,7 +89,7 @@ async function sendAndWaitForTurn(
 
 export default function (pi: ExtensionAPI) {
   pi.registerCommand("workflow", {
-    description: "Run the improvement workflow: analysis messages 1-3, 6, 5, then review rounds of messages 8-9 with context resets",
+    description: "Run the improvement workflow: analysis messages 1-3, 6, 5, then review rounds of messages 8, 9, and 5 (validation only when changes are detected) with context resets",
     handler: async (args, ctx) => {
       if (!ctx.hasUI) {
         ctx.ui.notify("/workflow requires interactive mode", "error");
@@ -133,12 +134,30 @@ export default function (pi: ExtensionAPI) {
             return;
           }
           for (const num of REVIEW_SEQUENCE) {
+            if (num === VALIDATION_MESSAGE) {
+              ctx.ui.setWorkingMessage(`Round ${round}/${rounds}: checking for changes...`);
+              const statusResult = await pi.exec("git", ["status", "--porcelain"]);
+              if (statusResult.code !== 0) {
+                ctx.ui.notify(`git status failed: ${statusResult.stderr}`, "error");
+                return;
+              }
+              if (!statusResult.stdout.trim()) {
+                ctx.ui.notify(`Round ${round}/${rounds}: no changes detected, skipping validation message`, "info");
+                break;
+              }
+            }
             ctx.ui.setWorkingMessage(`Round ${round}/${rounds}: sending message ${num}...`);
             const sent = await sendAndWaitForTurn(pi, ctx, messages[num]!);
             if (!sent) {
               ctx.ui.notify(`Failed to send message ${num}`, "error");
               return;
             }
+          }
+          ctx.ui.setWorkingMessage(`Round ${round}/${rounds}: staging changes...`);
+          const stageResult = await pi.exec("git", ["add", "."]);
+          if (stageResult.code !== 0) {
+            ctx.ui.notify(`git add failed: ${stageResult.stderr}`, "error");
+            return;
           }
         }
         ctx.ui.notify(`Workflow complete: ${rounds} review round${rounds === 1 ? "" : "s"}`, "info");

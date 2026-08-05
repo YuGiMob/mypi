@@ -9,7 +9,7 @@
   "defaultProjectTrust": "always",
   "enableInstallTelemetry": false,
   "compaction": {
-    "enabled": true
+    "enabled": false
   },
   "retry": {
     "baseDelayMs": 5000
