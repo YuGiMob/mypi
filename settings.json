@@ -1,11 +1,11 @@
 {
   "lastChangelogVersion": "0.83.0",
-  "defaultModel": "deepseek-v4-flash",
-  "defaultProvider": "opencode-go",
+  "defaultModel": "deepseek-v4-flash:0731",
+  "defaultProvider": "ollama-cloud",
   "packages": [
     "npm:pi-hashline-edit-pro"
   ],
-  "defaultThinkingLevel": "max",
+  "defaultThinkingLevel": "xhigh",
   "defaultProjectTrust": "always",
   "enableInstallTelemetry": false,
   "compaction": {
@@ -14,5 +14,20 @@
   "retry": {
     "baseDelayMs": 5000
   },
-  "theme": "dark"
+  "theme": "dark",
+  "tokenSpeed": {
+    "display": "ttft",
+    "tpsSlow": 0,
+    "tpsMedium": 15,
+    "tpsFast": 30,
+    "tpsBlazing": 45,
+    "colorSlow": "#ff4444",
+    "colorMedium": "#ffaa00",
+    "colorFast": "#00ff88",
+    "colorBlazing": "#44ddff",
+    "slidingWindow": 1000,
+    "useProviderTokens": true,
+    "countStrategy": "provider",
+    "endTpsBehavior": "average"
+  }
 }
