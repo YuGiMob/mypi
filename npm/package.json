@@ -17,6 +17,6 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "pi-hashline-edit-pro": "^1.1.2"
+    "pi-hashline-edit-pro": "^1.2.0"
   }
 }
