@@ -51,15 +51,15 @@ const KNOWN_MODELS: Record<string, ModelMeta> = {
   "rnj-1:8b": { contextWindow: 128_000, maxTokens: 8192, reasoning: false, vision: false },
 };
 
+const BASE_URL = "https://ollama.com/v1";
+const DISCOVERY_TIMEOUT_MS = 10_000;
+
 const normalizeModelId = (id: string): string => id.replace(/:(cloud|\d{4,8})$/, "");
 
-export default async function (pi: ExtensionAPI) {
-  const baseUrl = "https://ollama.com/v1";
-  const discoveryTimeoutMs = 10_000;
-
+async function discoverModels(signal: AbortSignal): Promise<ApiModel[]> {
   let modelIds: string[] = [];
   try {
-    const resp = await fetch("https://ollama.com/api/tags", { signal: AbortSignal.timeout(discoveryTimeoutMs) });
+    const resp = await fetch("https://ollama.com/api/tags", { signal });
     if (resp.ok) {
       const data = (await resp.json()) as { models: Array<{ name: string }> };
       modelIds = data.models.map((m) => m.name);
@@ -72,7 +72,7 @@ export default async function (pi: ExtensionAPI) {
 
   if (modelIds.length === 0) {
     try {
-      const resp = await fetch(`${baseUrl}/models`, { signal: AbortSignal.timeout(discoveryTimeoutMs) });
+      const resp = await fetch(`${BASE_URL}/models`, { signal });
       if (resp.ok) {
         const data = (await resp.json()) as { data: Array<{ id: string }> };
         modelIds = data.data.map((m) => m.id);
@@ -84,12 +84,7 @@ export default async function (pi: ExtensionAPI) {
     }
   }
 
-  if (modelIds.length === 0) {
-    console.error("[ollama-cloud] Could not discover any models. Check your network connection.");
-    return;
-  }
-
-  const apiModels: ApiModel[] = modelIds.map((id) => {
+  return modelIds.map((id) => {
     const meta = KNOWN_MODELS[id] ?? KNOWN_MODELS[normalizeModelId(id)] ?? DEFAULT_META;
     return {
       id,
@@ -97,12 +92,28 @@ export default async function (pi: ExtensionAPI) {
       maxTokens: meta.maxTokens,
     };
   });
+}
 
-  const models = buildModels(apiModels, KNOWN_MODELS, normalizeModelId);
+export default async function (pi: ExtensionAPI) {
+  const initial = await discoverModels(AbortSignal.timeout(DISCOVERY_TIMEOUT_MS));
+  if (initial.length === 0) {
+    console.error("[ollama-cloud] Could not discover any models. Check your network connection.");
+    return;
+  }
+
+  let currentModels = buildModels(initial, KNOWN_MODELS, normalizeModelId);
+
   registerProvider(pi, "ollama-cloud", {
     name: "Ollama Cloud",
-    baseUrl,
+    baseUrl: BASE_URL,
     apiKey: "$OLLAMA_API_KEY",
-    models,
+    models: currentModels,
+    refreshModels: async (context) => {
+      if (!context.allowNetwork) return currentModels;
+      const apiModels = await discoverModels(context.signal);
+      if (apiModels.length === 0) return currentModels;
+      currentModels = buildModels(apiModels, KNOWN_MODELS, normalizeModelId);
+      return currentModels;
+    },
   });
 }

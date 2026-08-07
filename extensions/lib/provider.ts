@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ProviderConfig } from "@earendil-works/pi-coding-agent";
 import { type ModelMeta, DEFAULT_META } from "./models.js";
 
 export interface ApiModel {
@@ -49,6 +49,7 @@ export function registerProvider(
     baseUrl: string;
     apiKey: string;
     models: ProviderModel[];
+    refreshModels?: ProviderConfig["refreshModels"];
   },
 ) {
   pi.registerProvider(key, {
@@ -57,5 +58,6 @@ export function registerProvider(
     apiKey: config.apiKey,
     api: "openai-completions",
     models: config.models,
+    ...(config.refreshModels ? { refreshModels: config.refreshModels } : {}),
   });
 }

@@ -35,7 +35,6 @@ interface TokenSpeedConfig {
 
 const STATUS_KEY = "tps";
 const SETTINGS_KEY = "tokenSpeed";
-const GENERATION_TOOLS = new Set(["edit", "write"]);
 const CHARS_PER_TOKEN = 4;
 const MIN_SPAN_MS = 250;
 const MIN_WINDOW_MS = 100;
@@ -60,24 +59,6 @@ const DEFAULT_CONFIG: TokenSpeedConfig = {
   useProviderTokens: true,
   countStrategy: "estimate",
   endTpsBehavior: "average",
-};
-
-const DISPLAY_LABELS: Record<DisplayMode, string> = {
-  tps: "TPS speed",
-  ttft: "TTFT only",
-  stats: "Token stats",
-  full: "Full details",
-};
-
-const STRATEGY_LABELS: Record<CountStrategy, string> = {
-  estimate: "Estimate (chars/4)",
-  direct: "Direct (per chunk)",
-  provider: "Provider only (exact)",
-};
-
-const END_BEHAVIOR_LABELS: Record<EndTpsBehavior, string> = {
-  average: "Average (overall)",
-  last: "Last (sliding window)",
 };
 
 const TOGGLE_LABELS: Record<"on" | "off", string> = {
@@ -322,19 +303,20 @@ class TpsMeter {
     this.pauseStart = Date.now();
   }
 
-  recordDelta(delta: string, usageOutput?: number): void {
+  resume(): void {
+    if (!this.isStreaming || !this.isPaused) return;
+    this.pausedMs += Date.now() - this.pauseStart;
+    this.isPaused = false;
+  }
+
+  recordDelta(delta: string): void {
     if (!this.isStreaming) return;
     if (this.isPaused) {
       this.pausedMs += Date.now() - this.pauseStart;
       this.isPaused = false;
     }
-    const now = Date.now();
-    if (usageOutput !== undefined && usageOutput > 0 && usageOutput > this.countedUsage) {
-      this.recordProviderUsage(usageOutput, now);
-      return;
-    }
-    if (this.strategy !== "provider" && (!this.useProviderTokens || usageOutput === undefined || usageOutput <= 0)) {
-      this.recordTokens(this.strategy === "estimate" ? this.estimateTokens(delta) : 1, now);
+    if (this.strategy !== "provider") {
+      this.recordTokens(this.strategy === "estimate" ? this.estimateTokens(delta) : 1, Date.now());
     }
   }
 
@@ -617,27 +599,25 @@ class TpsEvents {
     if (ev.type === "text_start" || ev.type === "thinking_start" || ev.type === "toolcall_start") {
       this.meter.stopTtft();
       this.meter.start();
-      if (ev.type === "toolcall_start") {
-        const toolCall = ev.partial.content?.[ev.contentIndex];
-        if (toolCall?.type === "toolCall" && !GENERATION_TOOLS.has(toolCall.name)) {
-          this.meter.pause();
-        }
-      }
       return;
     }
-    if (ev.type === "text_delta" || ev.type === "thinking_delta") {
-      this.meter.recordDelta(ev.delta, ev.partial.usage?.output);
+    if (ev.type === "text_delta" || ev.type === "thinking_delta" || ev.type === "toolcall_delta") {
+      this.meter.recordDelta(ev.delta);
       this.renderer.update(ctx);
       return;
     }
-    if (ev.type === "toolcall_delta") {
-      const toolCall = ev.partial.content?.[ev.contentIndex];
-      if (toolCall?.type === "toolCall" && GENERATION_TOOLS.has(toolCall.name)) {
-        this.meter.recordDelta(ev.delta, ev.partial.usage?.output);
-        this.renderer.update(ctx);
-      }
-      return;
-    }
+  }
+
+  private activeToolExecutions = 0;
+
+  handleToolExecutionStart(): void {
+    this.activeToolExecutions++;
+    if (this.activeToolExecutions === 1) this.meter.pause();
+  }
+
+  handleToolExecutionEnd(): void {
+    this.activeToolExecutions = Math.max(0, this.activeToolExecutions - 1);
+    if (this.activeToolExecutions === 0) this.meter.resume();
   }
 
   handleAgentEnd(event: AgentEndEvent, ctx: ExtensionContext): void {
@@ -672,6 +652,8 @@ export default function (pi: ExtensionAPI) {
   pi.on("message_update", (event, ctx: ExtensionContext) =>
     events.handleMessageUpdate(event, ctx),
   );
+  pi.on("tool_execution_start", () => events.handleToolExecutionStart());
+  pi.on("tool_execution_end", () => events.handleToolExecutionEnd());
   pi.on("agent_end", (event: AgentEndEvent, ctx: ExtensionContext) =>
     events.handleAgentEnd(event, ctx),
   );
