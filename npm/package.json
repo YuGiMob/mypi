@@ -17,13 +17,13 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "pi-cloud-ollama": "^1.0.0",
-    "pi-context-inspector": "^1.0.0",
-    "pi-git-commit": "^1.0.0",
-    "pi-hashline-edit-pro": "^1.2.1",
-    "pi-msg-queue": "^1.0.0",
-    "pi-msg-workflow": "^1.0.0",
-    "pi-multi-web-search": "^1.0.0",
-    "pi-tps-status": "^1.0.0"
+    "pi-cloud-ollama": "^1.0.4",
+    "pi-context-inspector": "^1.1.0",
+    "pi-git-commit": "^1.0.4",
+    "pi-hashline-edit-pro": "^2.5.3",
+    "pi-msg-queue": "^1.0.2",
+    "pi-msg-workflow": "^2.3.6",
+    "pi-multi-web-search": "^1.0.2",
+    "pi-tps-status": "^1.0.4"
   }
 }

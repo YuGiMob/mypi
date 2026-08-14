@@ -12,4 +12,4 @@ This rule applies to all languages: JavaScript, TypeScript, Python, Go, Rust, Ja
 
 ## DRY (Don't Repeat Yourself)
 
-Extract shared logic when you see the same pattern three or more times. Two instances might be coincidence; three is a pattern worth abstracting.
+Extract shared logic when you see the same pattern three or more times, or when two instances are substantial, structurally identical, and the abstraction is simpler than either copy.
