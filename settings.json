@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.84.1",
+  "lastChangelogVersion": "0.84.2",
   "defaultModel": "deepseek-v4-flash",
   "defaultProvider": "opencode-go",
   "packages": [
@@ -7,9 +7,9 @@
     "npm:pi-git-commit",
     "npm:pi-msg-queue",
     "npm:pi-tps-status",
-    "npm:pi-multi-web-search",
     "npm:pi-cloud-ollama",
     "npm:pi-context-inspector",
+    "npm:pi-jina-webtools",
     "npm:pi-msg-workflow"
   ],
   "defaultThinkingLevel": "max",

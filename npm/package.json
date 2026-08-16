@@ -21,9 +21,9 @@
     "pi-context-inspector": "^1.1.0",
     "pi-git-commit": "^1.0.4",
     "pi-hashline-edit-pro": "^2.5.3",
+    "pi-jina-webtools": "^0.1.1",
     "pi-msg-queue": "^1.0.2",
-    "pi-msg-workflow": "^2.3.6",
-    "pi-multi-web-search": "^1.0.2",
+    "pi-msg-workflow": "^2.3.9",
     "pi-tps-status": "^1.0.4"
   }
 }
