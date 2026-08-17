@@ -3,14 +3,13 @@
   "defaultModel": "deepseek-v4-flash",
   "defaultProvider": "opencode-go",
   "packages": [
-    "npm:pi-hashline-edit-pro",
     "npm:pi-git-commit",
     "npm:pi-msg-queue",
     "npm:pi-tps-status",
-    "npm:pi-cloud-ollama",
     "npm:pi-context-inspector",
     "npm:pi-jina-webtools",
-    "npm:pi-msg-workflow"
+    "npm:pi-msg-workflow",
+    "npm:pi-hashline-edit-pro"
   ],
   "defaultThinkingLevel": "max",
   "defaultProjectTrust": "always",
