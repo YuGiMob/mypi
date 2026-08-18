@@ -17,9 +17,10 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
+    "pi-cloud-ollama": "^1.0.4",
     "pi-context-inspector": "^1.1.0",
     "pi-git-commit": "^1.0.5",
-    "pi-hashline-edit-pro": "^2.6.0",
+    "pi-hashline-edit-pro": "^2.6.1",
     "pi-jina-webtools": "^0.1.1",
     "pi-msg-queue": "^1.0.2",
     "pi-msg-workflow": "^2.3.9",
