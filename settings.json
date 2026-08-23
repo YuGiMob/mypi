@@ -5,10 +5,11 @@
     "npm:pi-msg-queue",
     "npm:pi-tps-status",
     "npm:pi-context-inspector",
-    "npm:pi-jina-webtools",
     "npm:pi-msg-workflow",
+    "npm:pi-cloud-ollama",
+    "npm:pi-unsloth-webtools",
     "npm:pi-hashline-edit-pro",
-    "npm:pi-cloud-ollama"
+    "npm:pi-tor-proxy"
   ],
   "defaultThinkingLevel": "max",
   "defaultProjectTrust": "always",
