@@ -35,6 +35,40 @@
         }
       },
       {
+        "id": "deepseek-v4-flash-vision-exp",
+        "name": "DeepSeek V4 Flash Vision Exp",
+        "api": "openai-completions",
+        "provider": "opencode-go",
+        "baseUrl": "https://opencode.ai/zen/go/v1",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "cost": {
+          "input": 0.22,
+          "output": 0.66,
+          "cacheRead": 0.007,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "maxTokensField": "max_tokens",
+          "requiresReasoningContentOnAssistantMessages": true,
+          "thinkingFormat": "deepseek"
+        },
+        "contextWindow": 1000000,
+        "maxTokens": 384000,
+        "thinkingLevelMap": {
+          "minimal": null,
+          "low": "low",
+          "medium": null,
+          "high": "high",
+          "max": "max"
+        }
+      },
+      {
         "id": "deepseek-v4-pro",
         "name": "DeepSeek V4 Pro (New)",
         "api": "openai-completions",
@@ -347,6 +381,30 @@
         }
       },
       {
+        "id": "longcat-2.0",
+        "name": "LongCat-2.0",
+        "api": "openai-completions",
+        "provider": "opencode-go",
+        "baseUrl": "https://opencode.ai/zen/go/v1",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "cost": {
+          "input": 0.3,
+          "output": 1.2,
+          "cacheRead": 0.006,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "maxTokensField": "max_tokens"
+        },
+        "contextWindow": 1000000,
+        "maxTokens": 131072
+      },
+      {
         "id": "mimo-v2.5",
         "name": "MiMo V2.5",
         "api": "openai-completions",
@@ -606,9 +664,9 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1787527399942,
-    "lastModified": 1787315397000,
-    "etag": "W/\"3652c8924cfbb8c23736322bdb51b880\""
+    "checkedAt": 1787598238392,
+    "lastModified": 1787571275000,
+    "etag": "W/\"5b05133dff9e8c4b6b73a2000e9cbc6a\""
   },
   "opencode": {
     "models": [
@@ -1773,10 +1831,10 @@
           "image"
         ],
         "cost": {
-          "input": 2.5,
-          "output": 15,
-          "cacheRead": 0.25,
-          "cacheWrite": 3.125
+          "input": 2,
+          "output": 10,
+          "cacheRead": 0.2,
+          "cacheWrite": 2.5
         },
         "compat": {
           "sessionAffinityFormat": "openai-nosession",
@@ -2353,8 +2411,8 @@
         }
       }
     ],
-    "checkedAt": 1787527399924,
-    "lastModified": 1787315395000,
-    "etag": "W/\"05866f2b8311183e0582f34458a38925\""
+    "checkedAt": 1787598238368,
+    "lastModified": 1787560329000,
+    "etag": "W/\"1052bf128b901359d7742f3501bea490\""
   }
 }

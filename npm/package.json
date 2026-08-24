@@ -19,12 +19,12 @@
   "dependencies": {
     "pi-cloud-ollama": "^1.0.4",
     "pi-context-inspector": "^1.1.0",
-    "pi-git-commit": "^1.0.6",
+    "pi-git-commit": "^1.0.7",
     "pi-hashline-edit-pro": "^2.6.5",
     "pi-msg-queue": "^1.0.2",
     "pi-msg-workflow": "^2.3.11",
-    "pi-tor-proxy": "^0.1.6",
-    "pi-tps-status": "^1.0.4",
-    "pi-unsloth-webtools": "^0.2.3"
+    "pi-tor-proxy": "^0.1.8",
+    "pi-tps-status": "^1.0.5",
+    "pi-unsloth-webtools": "^0.2.5"
   }
 }
