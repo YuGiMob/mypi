@@ -7,9 +7,9 @@
     "npm:pi-context-inspector",
     "npm:pi-cloud-ollama",
     "npm:pi-unsloth-webtools",
-    "npm:pi-hashline-edit-pro",
     "npm:pi-tor-proxy",
-    "npm:pi-msg-workflow"
+    "npm:pi-msg-workflow",
+    "npm:pi-hashline-edit-pro"
   ],
   "defaultThinkingLevel": "max",
   "defaultProjectTrust": "always",
