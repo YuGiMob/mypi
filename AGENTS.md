@@ -13,3 +13,7 @@ This rule applies to all languages: JavaScript, TypeScript, Python, Go, Rust, Ja
 ## DRY (Don't Repeat Yourself)
 
 Extract shared logic when you see the same pattern three or more times, or when two instances are substantial, structurally identical, and the abstraction is simpler than either copy.
+
+## Git usage
+
+Mutative git commands may only be run when the user explicitly asks for them, or when the harness explicitly allows them after the user reenables mutative git commands.
