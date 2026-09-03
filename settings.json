@@ -8,8 +8,9 @@
     "npm:pi-unsloth-webtools",
     "npm:pi-tor-proxy",
     "npm:pi-ollama-cloud",
-    "npm:pi-hashline-edit-pro",
-    "npm:pi-msg-workflow"
+    "npm:pi-msg-workflow",
+    "npm:@charmland/pi-hyper-provider",
+    "npm:pi-hashline-edit-pro"
   ],
   "defaultThinkingLevel": "max",
   "defaultProjectTrust": "always",
@@ -36,7 +37,8 @@
     "countStrategy": "provider",
     "endTpsBehavior": "average"
   },
-  "defaultProvider": "ollama-cloud",
-  "defaultModel": "deepseek-v4-flash:0731",
-  "hideThinkingBlock": true
+  "defaultProvider": "hyper",
+  "defaultModel": "glm-5.3-flash",
+  "hideThinkingBlock": true,
+  "showCacheMissNotices": true
 }
