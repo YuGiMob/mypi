@@ -25,6 +25,6 @@
     "pi-ollama-cloud": "^0.10.0",
     "pi-tor-proxy": "^0.3.0",
     "pi-tps-status": "^1.0.5",
-    "pi-unsloth-webtools": "^0.5.1"
+    "pi-unsloth-webtools": "^0.6.0"
   }
 }

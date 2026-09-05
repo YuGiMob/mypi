@@ -40,7 +40,7 @@
   },
   "defaultProvider": "hyper",
   "defaultModel": "glm-5.3-flash",
-  "hideThinkingBlock": true,
+  "hideThinkingBlock": false,
   "showCacheMissNotices": true,
   "transport": "auto",
   "collapseChangelog": true,
