@@ -10,7 +10,8 @@
     "npm:pi-ollama-cloud",
     "npm:pi-msg-workflow",
     "git:github.com/yugimob/pi-hyper-provider",
-    "npm:pi-hashline-edit-pro"
+    "npm:pi-hashline-edit-pro",
+    "git:github.com/huggingface/pi-llama"
   ],
   "defaultThinkingLevel": "max",
   "defaultProjectTrust": "always",
