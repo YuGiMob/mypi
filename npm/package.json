@@ -17,15 +17,14 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "@charmland/pi-hyper-provider": "^0.3.2",
     "pi-context-inspector": "^1.1.0",
     "pi-git-commit": "^1.0.9",
-    "pi-hashline-edit-pro": "^3.0.0",
+    "pi-hashline-edit-pro": "^3.0.3",
     "pi-msg-queue": "^1.0.2",
-    "pi-msg-workflow": "^3.0.7",
+    "pi-msg-workflow": "^3.0.9",
     "pi-ollama-cloud": "^0.10.0",
     "pi-tor-proxy": "^0.3.0",
     "pi-tps-status": "^1.0.5",
-    "pi-unsloth-webtools": "^0.4.1"
+    "pi-unsloth-webtools": "^0.5.1"
   }
 }

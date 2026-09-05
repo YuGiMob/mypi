@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.84.4",
+  "lastChangelogVersion": "0.85.1",
   "packages": [
     "npm:pi-git-commit",
     "npm:pi-msg-queue",
@@ -9,7 +9,7 @@
     "npm:pi-tor-proxy",
     "npm:pi-ollama-cloud",
     "npm:pi-msg-workflow",
-    "npm:@charmland/pi-hyper-provider",
+    "git:github.com/yugimob/pi-hyper-provider",
     "npm:pi-hashline-edit-pro"
   ],
   "defaultThinkingLevel": "max",
@@ -40,5 +40,8 @@
   "defaultProvider": "hyper",
   "defaultModel": "glm-5.3-flash",
   "hideThinkingBlock": true,
-  "showCacheMissNotices": true
+  "showCacheMissNotices": true,
+  "transport": "auto",
+  "collapseChangelog": true,
+  "quietStartup": false
 }
