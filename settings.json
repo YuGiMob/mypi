@@ -4,16 +4,14 @@
     "npm:pi-git-commit",
     "npm:pi-msg-queue",
     "npm:pi-tps-status",
-    "npm:pi-context-inspector",
     "npm:pi-unsloth-webtools",
     "npm:pi-tor-proxy",
     "npm:pi-ollama-cloud",
     "npm:pi-msg-workflow",
-    "git:github.com/yugimob/pi-hyper-provider",
-    "npm:pi-hashline-edit-pro",
-    "git:github.com/huggingface/pi-llama"
+    "npm:@charmland/pi-hyper-provider",
+    "npm:pi-hashline-edit-pro"
   ],
-  "defaultThinkingLevel": "max",
+  "defaultThinkingLevel": "xhigh",
   "defaultProjectTrust": "always",
   "enableInstallTelemetry": false,
   "compaction": {
@@ -40,7 +38,7 @@
   },
   "defaultProvider": "hyper",
   "defaultModel": "glm-5.3-flash",
-  "hideThinkingBlock": false,
+  "hideThinkingBlock": true,
   "showCacheMissNotices": true,
   "transport": "auto",
   "collapseChangelog": true,
