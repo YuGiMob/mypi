@@ -17,9 +17,9 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "@charmland/pi-hyper-provider": "^0.4.0",
-    "pi-git-commit": "^1.0.9",
-    "pi-hashline-edit-pro": "^4.3.5",
+    "@charmland/pi-hyper-provider": "^0.4.1",
+    "pi-git-commit": "^1.1.1",
+    "pi-hashline-edit-pro": "^4.3.6",
     "pi-msg-queue": "^1.0.2",
     "pi-msg-workflow": "^3.0.13",
     "pi-ollama-cloud": "^0.12.1",
