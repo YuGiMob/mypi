@@ -9,8 +9,8 @@
     "npm:pi-msg-workflow",
     "npm:@charmland/pi-hyper-provider",
     "npm:pi-context-view",
-    "npm:pi-hashline-edit-pro",
-    "npm:pi-unsloth-webtools"
+    "npm:pi-unsloth-webtools",
+    "npm:pi-hashline-edit-pro"
   ],
   "defaultThinkingLevel": "xhigh",
   "defaultProjectTrust": "always",
@@ -37,7 +37,7 @@
     "countStrategy": "provider",
     "endTpsBehavior": "average"
   },
-  "defaultProvider": "hyper",
+  "defaultProvider": "ollama-cloud",
   "defaultModel": "deepseek-v4.1-flash",
   "hideThinkingBlock": true,
   "showCacheMissNotices": true,
