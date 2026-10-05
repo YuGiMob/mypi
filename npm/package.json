@@ -17,15 +17,12 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "@charmland/pi-hyper-provider": "^0.4.2",
     "pi-context-view": "^0.6.0",
-    "pi-git-commit": "^1.1.2",
-    "pi-hashline-edit-pro": "^4.4.2",
+    "pi-git-commit": "^1.1.3",
     "pi-msg-queue": "^1.0.2",
     "pi-msg-workflow": "^3.0.14",
-    "pi-ollama-cloud": "^0.12.1",
     "pi-tor-proxy": "^0.3.1",
     "pi-tps-status": "^1.0.5",
-    "pi-unsloth-webtools": "^0.8.0"
+    "pi-unsloth-webtools": "^0.11.0"
   }
 }

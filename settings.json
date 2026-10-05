@@ -1,16 +1,14 @@
 {
-  "lastChangelogVersion": "0.87.1",
+  "lastChangelogVersion": "1.0.3",
   "packages": [
     "npm:pi-git-commit",
     "npm:pi-msg-queue",
     "npm:pi-tps-status",
     "npm:pi-tor-proxy",
-    "npm:pi-ollama-cloud",
     "npm:pi-msg-workflow",
-    "npm:@charmland/pi-hyper-provider",
     "npm:pi-context-view",
     "npm:pi-unsloth-webtools",
-    "npm:pi-hashline-edit-pro"
+    "../../pi-hashline-edit-pro"
   ],
   "defaultThinkingLevel": "xhigh",
   "defaultProjectTrust": "always",
@@ -37,7 +35,7 @@
     "countStrategy": "provider",
     "endTpsBehavior": "average"
   },
-  "defaultProvider": "ollama-cloud",
+  "defaultProvider": "opencode-go",
   "defaultModel": "deepseek-v4.1-flash",
   "hideThinkingBlock": true,
   "showCacheMissNotices": true,
