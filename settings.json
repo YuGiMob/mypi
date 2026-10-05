@@ -8,7 +8,7 @@
     "npm:pi-msg-workflow",
     "npm:pi-context-view",
     "npm:pi-unsloth-webtools",
-    "../../pi-hashline-edit-pro"
+    "npm:pi-hashline-edit-pro"
   ],
   "defaultThinkingLevel": "xhigh",
   "defaultProjectTrust": "always",
